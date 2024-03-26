@@ -42,7 +42,8 @@ def improved_prompt(text,llm_model,device,system_prompt,prompt_template):
     final_output = output["content"].split("\n")[0]
     return final_output
 
-def convert_to_string(word_pos_list):
+def convert_to_string(word_pos_list) -> str:
+    """Converts tagset to string (helperfunction)"""
     result = ' '
     for word, pos in word_pos_list:
         result += word + '/' + pos + ' '
@@ -50,6 +51,7 @@ def convert_to_string(word_pos_list):
 
 #def tagset --> part-of-speech tagging
 def tagset(text):
+    """Generates tags for text prompt."""
     tagged_tokens = pos_tag(word_tokenize(text), tagset='universal') 
     tagged_text = convert_to_string(tagged_tokens)
 

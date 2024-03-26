@@ -28,6 +28,7 @@ if llm_save_path is not None:
 model = GPT4All(llm_model,allow_download=True,model_path=llm_save_path,device=device)
 #prompt settings
 system_prompt = '### System:You are an AI assistant that translate the motion described by the given sentences to the motion of each bodypart only using one cohesive paragraph. The available body parts include [‘arms’, ‘legs’, ‘torso’, ‘neck’, ‘buttocks’, ‘waist’]..'
+# system_prompt = '### System:You are an AI assistant and give more detailed descriptions of the motion described in the given text.' # prompt for a more detailed desciption but without explicit limb motion description
 # prompt_template = '### User:{0}### Response:'
 prompt_template = ''
 

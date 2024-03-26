@@ -15,7 +15,7 @@ class Mistral:
         # Check if model folder is given
         if self.dir_path is not None:
             if not os.path.exists(os.path.dirname(self.dir_path)):
-                osmkdir(self.dir_path)
+                os.mkdir(self.dir_path)
                 print(f"Folder '{self.dir_path}' created successfully.")
 
         self.model = GPT4All(
@@ -32,12 +32,12 @@ class Mistral:
         self.prompt_template = ""
 
         # Data
-        self.data_path = "../MoMask/dataset/HumanML3D/texts_org"
-        self.test_data_filter_path = "../MoMask/dataset/HumanML3D/test.txt"
+        self.data_path = "MoMask/dataset/HumanML3D/texts_org"
+        self.test_data_filter_path = "MoMask/dataset/HumanML3D/test.txt"
         self.output_path = os.path.join(OUT_DIR, f"text_refinements/{self.__class__.__name__}/joints")
 
         if not os.path.exists(os.path.dirname(self.output_path)):
-                osmkdir(self.output_path)
+                os.mkdir(self.output_path)
                 print(f"Output folder '{self.output_path}' created successfully.")
 
 

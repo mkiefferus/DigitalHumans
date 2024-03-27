@@ -5,11 +5,13 @@ from nltk.tokenize import word_tokenize
 import os
 from tqdm import tqdm
 from utils import PROMPT_MODEL_FILES_DIR, DEVICE, OUT_DIR
+from mistral import Mistral
 
+print(PROMPT_MODEL_FILES_DIR)
 # Download the necessary resources for part-of-speech tagging
-nltk.download('punkt', download_dir=PROMPT_MODEL_FILES_DIR, quiet=True)
-nltk.download('averaged_perceptron_tagger', download_dir=PROMPT_MODEL_FILES_DIR, quiet=True)
-nltk.download('universal_tagset', download_dir=PROMPT_MODEL_FILES_DIR, quiet=True)
+nltk.download('punkt', download_dir=os.path.join(PROMPT_MODEL_FILES_DIR, "nltk_data"), quiet=True)
+nltk.download('averaged_perceptron_tagger', download_dir=os.path.join(PROMPT_MODEL_FILES_DIR, "nltk_data"), quiet=True)
+nltk.download('universal_tagset', download_dir=os.path.join(PROMPT_MODEL_FILES_DIR, "nltk_data"), quiet=True)
 
 def convert_to_string(word_pos_list) -> str:
     """Converts tagset to string (helperfunction)"""
@@ -27,31 +29,29 @@ def tagset(text):
     return tagged_text
 
 def main():
-    # M = Mistral()
-    data_path = "MoMask/dataset/HumanML3D/texts_org"
-    test_data_filter_path = "MoMask/dataset/HumanML3D/test.txt"
-    output_path = os.path.join(OUT_DIR, f"text_refinements/Mistral/joints")
+    M = Mistral()
 
-    # num_files = sum(1 for line in open(M.test_data_filter_path).close())
-    num_files = sum(1 for line in open(test_data_filter_path))
+    num_files = sum(1 for line in open(M.test_data_filter_path))
+    
+    STOP_AFTER_N_STEPS = 4
     
     # Iterate through all test files
-    with open(test_data_filter_path, 'r') as file:
+    with open(M.test_data_filter_path, 'r') as file:
 
 
         line_count = 0
-        for file in tqdm(file, total=num_files, desc="Processing files"):
+        for file in tqdm(file, total=min(num_files, STOP_AFTER_N_STEPS), desc="Processing files"):
             # Remove newline character and any leading/trailing whitespace
             file_name = file.strip()
             
             # Construct the full path to the file
-            file_path = os.path.join(data_path, file_name+".txt")
+            file_path = os.path.join(M.data_path, file_name+".txt")
             
             # Check if the file exists
             if os.path.exists(file_path):
 
                 # Open the file
-                file_output_path = os.path.join(output_path, file_name+".txt")
+                file_output_path = os.path.join(M.output_path, file_name+".txt")
 
                 with open(file_path, 'r') as current_file: 
 
@@ -78,7 +78,7 @@ def main():
                             altered_file.write(new_prompt + new_prompt_tag + annotations + '\n')
 
             line_count += 1
-            if line_count >= 4:
+            if line_count >= STOP_AFTER_N_STEPS:
                 break   
 
 if __name__ == "__main__":

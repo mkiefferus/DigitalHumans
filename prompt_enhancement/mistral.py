@@ -34,11 +34,11 @@ class Mistral:
         # Data
         self.data_path = "MoMask/dataset/HumanML3D/texts_org"
         self.test_data_filter_path = "MoMask/dataset/HumanML3D/test.txt"
-        self.output_path = os.path.join(OUT_DIR, f"text_refinements/{self.__class__.__name__}/joints")
+        self.output_path = os.path.join(OUT_DIR, f"{self.__class__.__name__}/joints")
 
-        if not os.path.exists(os.path.dirname(self.output_path)):
-                os.mkdir(self.output_path)
-                print(f"Output folder '{self.output_path}' created successfully.")
+        if not os.path.exists(self.output_path):
+            os.mkdir(self.output_path)
+            print(f"Output folder '{self.output_path}' created successfully.")
 
 
 

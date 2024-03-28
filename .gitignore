@@ -1,5 +1,5 @@
-data/t2m_model_weights/*
-data/prompt_llm_models/*
-data/datasets/*
 out/logs/*
 */__pycache__/*
+external_repos/momask-codes/*
+data/*
+.DS_Store

@@ -1,5 +1,6 @@
 out/logs/*
 */__pycache__/*
+MoMask
 external_repos/momask-codes/*
 data/*
 .DS_Store

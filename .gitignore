@@ -1,6 +1,10 @@
 out/logs/*
 */__pycache__/*
 MoMask
+data
+digitalHumans
+venv
+
 external_repos/momask-codes/*
 data/*
 .DS_Store

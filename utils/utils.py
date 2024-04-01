@@ -6,6 +6,7 @@ import torch
 # directories
 SESSION_ID = str(time())
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # the project root directory
+# CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # the project root directory
 LOG_DIR = os.path.join(ROOT_DIR, "out", "logs")
 OUT_DIR = os.path.join(ROOT_DIR, "out")
 DATA_DIR = os.path.join(ROOT_DIR, "data")

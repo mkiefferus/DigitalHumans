@@ -2,6 +2,8 @@ import spacy
 import os
 import torch
 from tqdm import tqdm
+from datetime import datetime
+import argparse
 
 from openai import OpenAI
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -48,7 +50,7 @@ def improved_prompt(text: str, openai_client: OpenAI) -> str:
     return text + " " + final_output
 
 
-def text_enhancement(info_file_name: str, openai_client: OpenAI) -> None:
+def text_enhancement(info_file_name: str, openai_client: OpenAI, target_folder: str) -> None:
     """
     Runs full text enhancement pipeline for all files specified by info_file_name and saves them at folder
     altered_texts.
@@ -73,10 +75,10 @@ def text_enhancement(info_file_name: str, openai_client: OpenAI) -> None:
             file_name = line.strip()
 
             # Construct the full path to the file
-            file_path = os.path.join("texts/", file_name + ".txt")
+            file_path = os.path.join("../external_repos/momask-codes/dataset/HumanML3D/texts/", file_name + ".txt")
 
             # Open the file
-            altered_text_path = os.path.join("altered_texts/", file_name + ".txt")
+            altered_text_path = os.path.join(target_folder, file_name + ".txt")
             try:
                 with open(file_path, 'r') as opened_file:
                     # Clear the file
@@ -106,15 +108,27 @@ def text_enhancement(info_file_name: str, openai_client: OpenAI) -> None:
 
             line_count += 1
             # For debugging purposes
-            # if line_count >= 10:
-            #     break
+            if line_count >= 10:
+                break
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Text Enhancement Pipeline")
+    parser.add_argument("--folder_name", type=str, help="Specifies the target folder name where generated texts are saved to")
+    args = parser.parse_args()
+
     print(f"Using {DEVICE} device")
 
     client = OpenAI()
-    text_enhancement("../../Similarity_Search/test.txt", client)
+
+    if args.folder_name:
+        target_folder = f"../prompt_enhancement/altered_texts/{args.folder_name}"
+    else:
+        timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        target_folder = f"../prompt_enhancement/altered_texts/altered_texts_{timestamp}"
+    os.mkdir(target_folder)
+
+    text_enhancement("../external_repos/momask-codes/dataset/HumanML3D/test.txt", client, target_folder)
 
 
 if __name__ == "__main__":

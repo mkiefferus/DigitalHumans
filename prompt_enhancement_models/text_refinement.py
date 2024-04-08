@@ -1,5 +1,6 @@
 import spacy
 import os
+import sys
 import torch
 from tqdm import tqdm
 from datetime import datetime
@@ -7,6 +8,8 @@ import argparse
 
 from openai import OpenAI
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+# Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
+os.chdir(sys.path[0])
 
 
 def process_text(sentence, nlp):
@@ -45,7 +48,6 @@ def improved_prompt(text: str, openai_client: OpenAI) -> str:
         ]
     )
 
-    # print(completion.choices[0].message.content)
     final_output = completion.choices[0].message.content.split("\n")[0]
     return text + " " + final_output
 

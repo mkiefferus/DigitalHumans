@@ -128,7 +128,9 @@ def main():
     else:
         timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         target_folder = f"../prompt_enhancement/altered_texts/altered_texts_{timestamp}"
-    os.mkdir(target_folder)
+
+    if not os.path.exists(target_folder):
+        os.mkdir(target_folder)
 
     text_enhancement("../external_repos/momask-codes/dataset/HumanML3D/test.txt", client, target_folder)
 

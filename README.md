@@ -1,12 +1,16 @@
 # Enhancing Text-to-Motion Synthesis through Language Models
 
 ## Setup
-### 1. Integrating External Repositories
+### Integrating External Repositories
 #### MoMask
 Clone the [MoMask Repository](https://github.com/EricGuo5513/momask-codes) into the folder ```DigitalHumans/external_repos``` and follow their instruction to download datasets and models
 
-### 2. Adding OpenAI API Key
-Follow the instructions given in _"Step 2 - Set up your API key for all projects (recommended)"_ in the [OpenAI API Documentation](https://platform.openai.com/docs/quickstart?context=python) to configure your OpenAI API access.
+### OpenAI API Setup
+1. Install OpenAI Python library
+```
+pip install openai
+```
+2. Follow the instructions given in _"Step 2 - Set up your API key for all projects (recommended)"_ in the [OpenAI API Documentation](https://platform.openai.com/docs/quickstart?context=python) to configure your OpenAI API access.
 
 ## Usage
 ### Motion Description Enhancement

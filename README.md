@@ -1,16 +1,25 @@
 # Enhancing Text-to-Motion Synthesis through Language Models
 
 ## Setup
+### Installing neccessary libraries
+#### Text Enhancement
+In order to run the text enhancement scripts and generate enhanced text descriptions, you will need to install the following python packages:
+- spacy
+- torch
+- tqdm
+- openai
+
+Furthermore, you will need to download the ```en_core_web_sm``` model:
+```
+python -m spacy download en_core_web_sm
+```
+
 ### Integrating External Repositories
 #### MoMask
 Clone the [MoMask Repository](https://github.com/EricGuo5513/momask-codes) into the folder ```DigitalHumans/external_repos``` and follow their instruction to download datasets and models
 
 ### OpenAI API Setup
-1. Install OpenAI Python library
-```
-pip install openai
-```
-2. Follow the instructions given in _"Step 2 - Set up your API key for all projects (recommended)"_ in the [OpenAI API Documentation](https://platform.openai.com/docs/quickstart?context=python) to configure your OpenAI API access.
+Follow the instructions given in _"Step 2 - Set up your API key for all projects (recommended)"_ in the [OpenAI API Documentation](https://platform.openai.com/docs/quickstart?context=python) to configure your OpenAI API access.
 
 ## Usage
 ### Motion Description Enhancement

@@ -5,6 +5,7 @@ import torch
 from tqdm import tqdm
 from datetime import datetime
 import argparse
+import json
 
 from openai import OpenAI
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -29,10 +30,11 @@ def process_text(sentence, nlp):
     return word_list, pos_list
 
 
-def improved_prompt(text: str, openai_client: OpenAI) -> str:
+def improved_prompt(text: str, openai_client: OpenAI, system_prompt: str) -> str:
     """
     Given a motion description, output enhanced motion description using OpenAI's GPT-3.5-turbo model.
 
+    @param system_prompt:
     @param openai_client: OpenAI object for API calls
     @param text: motion description to refine
     @return: enhanced motion description
@@ -42,7 +44,7 @@ def improved_prompt(text: str, openai_client: OpenAI) -> str:
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system",
-             "content": "You will receive a motion description. Answer with one short sentence that precisely describes the movement of the most relevant body part for this motion. Here is an example: a man kicks something or someone with his left leg Your output should be: They do so by rapidly lifting and extending their left leg."},
+             "content": system_prompt},
             {"role": "user",
              "content": text}
         ]
@@ -52,10 +54,12 @@ def improved_prompt(text: str, openai_client: OpenAI) -> str:
     return text + " " + final_output
 
 
-def text_enhancement(info_file_name: str, openai_client: OpenAI, target_folder: str) -> None:
+def text_enhancement(info_file_name: str, openai_client: OpenAI, target_folder: str, system_prompt: str) -> None:
     """
     Runs full text enhancement pipeline for all files specified by info_file_name and saves them at folder
     altered_texts.
+    @param system_prompt:
+    @param target_folder:
     @param openai_client: OpenAI object for API calls
     @param info_file_name: Text file specifying which files belong to the dataset split
     """
@@ -92,7 +96,7 @@ def text_enhancement(info_file_name: str, openai_client: OpenAI, target_folder: 
                         # Extract the text part generate new prompt and part-of-speech tagging
                         text = parts[0].strip()
 
-                        new_prompt = improved_prompt(text, openai_client)
+                        new_prompt = improved_prompt(text, openai_client, system_prompt)
                         word_list, pose_list = process_text(new_prompt, nlp)
                         new_prompt_tag = ' '.join(
                             ['%s/%s' % (word_list[i], pose_list[i]) for i in range(len(word_list))])
@@ -117,6 +121,8 @@ def text_enhancement(info_file_name: str, openai_client: OpenAI, target_folder: 
 def main():
     parser = argparse.ArgumentParser(description="Text Enhancement Pipeline")
     parser.add_argument("--folder_name", type=str, help="Specifies the target folder name where generated texts are saved to")
+    parser.add_argument("--system_prompt", type=str, help="Name of JSON file containing system prompt",
+                        default='extra_sentence.json')
     args = parser.parse_args()
 
     print(f"Using {DEVICE} device")
@@ -129,10 +135,14 @@ def main():
         timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         target_folder = f"../prompt_enhancement/altered_texts/altered_texts_{timestamp}"
 
+    with open(f"../prompts/{args.system_prompt}", 'r') as file:
+        system_prompt = json.load(file).get('system_prompt')
+
     if not os.path.exists(target_folder):
         os.mkdir(target_folder)
 
-    text_enhancement("../external_repos/momask-codes/dataset/HumanML3D/test.txt", client, target_folder)
+    text_enhancement("../external_repos/momask-codes/dataset/HumanML3D/test.txt", client, target_folder,
+                     system_prompt)
 
 
 if __name__ == "__main__":

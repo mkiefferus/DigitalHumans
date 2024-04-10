@@ -8,6 +8,7 @@ import argparse
 import json
 
 from openai import OpenAI
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])
@@ -51,6 +52,10 @@ def improved_prompt(text: str, openai_client: OpenAI, system_prompt: str) -> str
     )
 
     final_output = completion.choices[0].message.content.split("\n")[0]
+
+    if "[Empty]" in final_output:
+        return text
+
     return text + " " + final_output
 
 
@@ -114,13 +119,14 @@ def text_enhancement(info_file_name: str, openai_client: OpenAI, target_folder: 
 
             line_count += 1
             # For debugging purposes
-            if line_count >= 10:
-                break
+            # if line_count >= 10:
+            #     break
 
 
 def main():
     parser = argparse.ArgumentParser(description="Text Enhancement Pipeline")
-    parser.add_argument("--folder_name", type=str, help="Specifies the target folder name where generated texts are saved to")
+    parser.add_argument("--folder_name", type=str,
+                        help="Specifies the target folder name where generated texts are saved to")
     parser.add_argument("--system_prompt", type=str, help="Name of JSON file containing system prompt",
                         default='extra_sentence.json')
     args = parser.parse_args()

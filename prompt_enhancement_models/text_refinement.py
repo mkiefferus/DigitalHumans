@@ -1,22 +1,22 @@
-import spacy
-import os
-import sys
-import torch
-from tqdm import tqdm
-from datetime import datetime
-import argparse
-import json
-
 from openai import OpenAI
+import os
+import spacy
+import json
+from tqdm import tqdm
+import torch
+import sys
+import argparse
+from datetime import datetime
+import numpy as np
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])
 
-
-def process_text(sentence, nlp):
-    sentence = sentence.replace('-', '')
-    doc = nlp(sentence)
+def _annotate_motion(motion, nlp):
+    """Add part of speech tags to motion description."""
+    motion = motion.replace('-', '')
+    doc = nlp(motion)
     word_list = []
     pos_list = []
     for token in doc:
@@ -30,97 +30,155 @@ def process_text(sentence, nlp):
         pos_list.append(token.pos_)
     return word_list, pos_list
 
-
-def improved_prompt(text: str, openai_client: OpenAI, system_prompt: str) -> str:
-    """
-    Given a motion description, output enhanced motion description using OpenAI's GPT-3.5-turbo model.
-
-    @param system_prompt:
-    @param openai_client: OpenAI object for API calls
-    @param text: motion description to refine
-    @return: enhanced motion description
-    """
-
-    completion = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system",
-             "content": system_prompt},
-            {"role": "user",
-             "content": text}
-        ]
-    )
-
-    final_output = completion.choices[0].message.content.split("\n")[0]
-
-    if "[Empty]" in final_output:
-        return text
-
-    return text + " " + final_output
-
-
-def text_enhancement(info_file_name: str, openai_client: OpenAI, target_folder: str, system_prompt: str) -> None:
-    """
-    Runs full text enhancement pipeline for all files specified by info_file_name and saves them at folder
-    altered_texts.
-    @param system_prompt:
-    @param target_folder:
-    @param openai_client: OpenAI object for API calls
-    @param info_file_name: Text file specifying which files belong to the dataset split
-    """
-    try:
+def export_data(data:json, annotations_dict:dict[str:list[str]], output_folder:str):
+    """Generate dataset with refined text"""
+    
+    try: 
         nlp = spacy.load('en_core_web_sm')
     except OSError:
         print("Could not locate en_core_web_sm model, please install with \"python -m spacy download en_core_web_sm\"")
         exit(1)
 
-    num_lines = sum(1 for line in open(info_file_name))
-    with open(info_file_name, 'r') as file:
-        line_count = 0
-        for line in tqdm(file, total=num_lines, desc="Generating enhanced motion descriptions"):
-            # Use this if generating crashed and you want to resume somewhere
-            # if line_count < 1517:
-            #     line_count += 1
-            #     continue
-            # Remove newline character and any leading/trailing whitespace
-            file_name = line.strip()
+    for file_name, output in data.items():
 
-            # Construct the full path to the file
-            file_path = os.path.join("../external_repos/momask-codes/dataset/HumanML3D/texts/", file_name + ".txt")
+        # Check if annotations exist for the filename
+        if file_name not in annotations_dict:
+            raise KeyError(f"Annotations missing for file: {file_name}")
+        
+        altered_text_path = os.path.join(output_folder, file_name + ".txt")
+        open(altered_text_path, 'w').close()  # Clear the file
 
-            # Open the file
-            altered_text_path = os.path.join(target_folder, file_name + ".txt")
-            try:
-                with open(file_path, 'r') as opened_file:
-                    # Clear the file
-                    open(altered_text_path, 'w').close()
-                    # Read the file line by line
-                    for prompt_line in opened_file:
-                        # Split the line by '#' to separate text and annotations
-                        parts = prompt_line.strip().split('#')
-                        # Extract the text part generate new prompt and part-of-speech tagging
-                        text = parts[0].strip()
+        with open(altered_text_path, 'a') as altered_file:
+            
+            for motion, annotation in zip(output, annotations_dict[file_name]):
+                
+                # Add part of speech tags to motion description
+                word_list, pose_list = _annotate_motion(motion, nlp)
+                motion_tag = ' '.join(['%s/%s' % (word_list[i], pose_list[i]) for i in range(len(word_list))])
 
-                        new_prompt = improved_prompt(text, openai_client, system_prompt)
-                        word_list, pose_list = process_text(new_prompt, nlp)
-                        new_prompt_tag = ' '.join(
-                            ['%s/%s' % (word_list[i], pose_list[i]) for i in range(len(word_list))])
-                        # Extract annotations
-                        annotations = "#" + parts[2].strip().split('#')[0].strip() + "#" + parts[3].strip().split('#')[
-                            0].strip()
-                        with open(altered_text_path, 'a') as altered_file:
-                            altered_file.write(new_prompt + '#' + new_prompt_tag + annotations + '\n')
-            except UnicodeDecodeError:
-                # writing code
-                print(f"Error decoding file {file_path}")
-                if os.path.exists(altered_text_path):
-                    # Delete the file (assumes we are replacing files in HumanML3D, i.e. will just result in unaltered file being used)
-                    os.remove(altered_text_path)
+                # Write final refined text to file
+                altered_file.write(motion + '#' + motion_tag + '#' + annotation + '\n')
 
-            line_count += 1
-            # For debugging purposes
-            # if line_count >= 10:
-            #     break
+
+def process_data(filenames:list[str]) -> tuple[str, dict[str, list[str]]]:
+    """Process files into JSON format and extract annotations.
+
+    Args:
+        filenames (List[str]): List of filenames to be processed.
+
+    Returns:
+        Tuple[str, Dict[str, List[str]]]: A tuple containing the JSON string of motions and a dictionary of annotations.
+    """
+
+    base_dir = "../external_repos/momask-codes/dataset/HumanML3D/texts"
+
+    input_dict = {}
+    annotations_dict = {}
+
+    for filename in filenames:
+
+        file_path = os.path.join(base_dir, filename + ".txt")
+        
+        # Initialize lists for each filename
+        input_dict[filename] = []
+        annotations_dict[filename] = []
+
+        try:
+            with open(file_path, 'r') as opened_file:
+                lines = opened_file.readlines()
+            
+            for line in lines:
+                content, _, a1, a2 = line.strip().rsplit("#", 3)
+
+                # Append content and annotations to respective lists
+                input_dict[filename].append(content)
+                annotations_dict[filename].append(f"#{a1}#{a2}")
+
+        # Handle exceptions
+        except FileNotFoundError:
+            raise FileNotFoundError(f"The file {file_path} does not exist.")
+        except Exception as e:
+            raise Exception(f"An error occurred while processing {file_path}: {str(e)}")
+        
+    # Convert input dictionary to JSON format
+    json_input = json.dumps(input_dict, indent=4)
+
+    return json_input, annotations_dict
+
+
+def get_text_refinement(data:json, system_prompt:str, model:str, client) -> json:
+    """Use OpenAI API for text refinement."""
+
+    batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary and are given a JSON of format: 
+        "filename1": [
+        "motion1",
+        "motion2",
+        "motion3",
+        ],
+        "filename2": [
+        "motion4",
+        "motion5",
+        ]
+        and so on. 
+        You output in the JSON format. Your answer will be in the same string, no extra strings.
+        You will: keep the order of the motions, elaborate each motion but stay concise, treat each motion as a separate task and go through all of them, only focus on the motion description.
+        You will NOT: explain if it is the first or second motion, skip motions.
+        """
+    
+    new_system_prompt = batch_prompt + system_prompt
+
+    new_prompt = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": new_system_prompt},
+            {"role": "user", "content": f"list of strings: {data}"}
+            ]
+        )
+    return json.loads(new_prompt.choices[0].message.content)
+
+
+def refine_text(data_folder:str, 
+                output_folder:str, 
+                system_prompt:str, 
+                batch_size:int=3, 
+                model:str="gpt-3.5-turbo", 
+                client=OpenAI(), 
+                refine_specific_samples_txt_path=None,
+                stop_after_n_samples=np.inf):
+    """Refines text in datafolder using given model and system prompt"""
+
+    # Get list of filenames to process (without .txt)
+    if refine_specific_samples_txt_path is not None:
+        with open(refine_specific_samples_txt_path, 'r') as file:
+            file_names = file.read().splitlines()
+        files = [f[:-4] for f in os.listdir(data_folder) if f.endswith('.txt') and f.split('.')[0] in file_names]
+    else:
+        files = [f[:-4] for f in os.listdir(data_folder) if f.endswith('.txt')]
+    print(f"Total files found: {len(files)}")
+
+    # number of batches
+    num_batches = (len(files) + batch_size - 1) // batch_size  # This ensures all files are included even if the last batch is smaller
+
+    progress = tqdm(range(num_batches), desc="Processing batches")
+
+    for i in progress:
+        batch = files[i*batch_size:(i+1)*batch_size]
+
+        try:
+            input, annotations = process_data(batch)
+            data = get_text_refinement(data=input, system_prompt=system_prompt, model=model, client=client)
+            export_data(data=data, annotations_dict=annotations, output_folder=output_folder)
+
+        except Exception as e:
+            print(f"An error occurred while processing batch {i + 1} ({batch}): {e}")
+
+        if i == stop_after_n_samples -1:
+            break
+
+        progress.update(1)
+    progress.close()
+
+    print("Text refinement complete.")
 
 
 def main():
@@ -129,6 +187,8 @@ def main():
                         help="Specifies the target folder name where generated texts are saved to")
     parser.add_argument("--system_prompt", type=str, help="Name of JSON file containing system prompt",
                         default='extra_sentence.json')
+    parser.add_argument("--batch_size", type=int, default=1, help="Batch size for text enhancement")
+    parser.add_argument("--early_stop", type=int, default=np.inf, help="Stop after n refined samples for testing purposes")
     args = parser.parse_args()
 
     print(f"Using {DEVICE} device")
@@ -147,8 +207,15 @@ def main():
     if not os.path.exists(target_folder):
         os.mkdir(target_folder)
 
-    text_enhancement("../external_repos/momask-codes/dataset/HumanML3D/test.txt", client, target_folder,
-                     system_prompt)
+    refine_text(data_folder="../external_repos/momask-codes/dataset/HumanML3D/texts/", 
+            output_folder=target_folder,
+            system_prompt=system_prompt,
+            batch_size=args.batch_size,
+            client=client,
+            refine_specific_samples_txt_path="../external_repos/momask-codes/dataset/HumanML3D/test.txt",
+            stop_after_n_samples=args.early_stop
+        )
+
 
 
 if __name__ == "__main__":

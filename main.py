@@ -50,7 +50,7 @@ if __name__ == '__main__':
     print(logfile)
     
     args.out_dir = os.path.join(OUT_DIR, args.experiment_name)
-    os.makedirs(args.out_dir, exist_ok=True)
+    # os.makedirs(args.out_dir, exist_ok=True)
     
     # Note: If this gets too complicated, consider using a factory pattern
     if not args.train:
@@ -84,9 +84,9 @@ if __name__ == '__main__':
         try:
         # run t2m model
             if args.model == "mo_mask":
-                eval_file_exec = "eval_t2m_vq.py"
-                exec_file = os.path.join(MOMASK_REPO_DIR, eval_file_exec)
-                dataset_name = "kit" if args.dataset == "kit" else "t2m"
+                #eval_file_exec = "eval_t2m_vq.py"
+                #exec_file = os.path.join(MOMASK_REPO_DIR, eval_file_exec)
+                #dataset_name = "kit" if args.dataset == "kit" else "t2m"
                 
                 cmd = f'cd external_repos/momask-codes; python eval_t2m_trans_res.py --res_name tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw --dataset_name t2m --name t2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns --gpu_id 0 --cond_scale 4 --time_steps 10 --ext evaluation --batch_size 2 > {logfile.name}'
                 # p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)

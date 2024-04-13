@@ -1,5 +1,5 @@
 from gpt4all import GPT4All
-from utils import PROMPT_MODEL_FILES_DIR, DEVICE, OUT_DIR
+from utils.utils import PROMPT_MODEL_FILES_DIR, DEVICE, OUT_DIR
 import os
 from tqdm import tqdm
 

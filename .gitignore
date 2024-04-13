@@ -9,7 +9,8 @@ external_repos/momask-codes/*
 data/*
 .DS_Store
 .git
-
+.idea
+prompt_enhancement/altered_texts/*
 
 # Playground files
 playground

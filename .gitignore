@@ -11,3 +11,6 @@ data/*
 .git
 .idea
 prompt_enhancement/altered_texts/*
+
+# Playground files
+playground

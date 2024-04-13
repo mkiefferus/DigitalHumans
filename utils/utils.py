@@ -17,3 +17,9 @@ PROMPT_MODEL_FILES_DIR = os.path.join(DATA_DIR, "prompt_llm_models")
 
 # device
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# if repo is cloned for the first time, create empty folder structure, so no "PATH NOT FOUND" errors occur
+for folder in [LOG_DIR, PROMPT_MODEL_FILES_DIR, EXTERNAL_REPOS_DIR]:
+    if not os.path.exists(folder):
+        os.makedirs(folder, exist_ok=True)
+        print(f"Created folder {folder}")

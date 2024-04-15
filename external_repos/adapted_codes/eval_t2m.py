@@ -899,11 +899,28 @@ def evaluation_mask_transformer_test(val_loader, vq_model, trans, repeat_id, eva
 
 def performance_buffer():
     pass
-
+    
 @torch.no_grad()
 def evaluation_mask_transformer_test_plus_res(val_loader, vq_model, res_model, trans, repeat_id, eval_wrapper,
                                 time_steps, cond_scale, temperature, topkr, gsample=True, force_mask=False,
                                               cal_mm=True, res_cond_scale=5):
+    # prepare for saving animations and generated motions
+    from utils.paramUtil import t2m_kinematic_chain
+    from visualization.joints2bvh import Joint2BVHConvertor
+    from utils.plot_script import plot_3d_motion
+    import time
+    result_dir = os.path.join('./generation', str(time.time()))
+    joints_dir = os.path.join(result_dir, 'joints')
+    animation_dir = os.path.join(result_dir, 'animations')
+    os.makedirs(joints_dir, exist_ok=True)
+    os.makedirs(animation_dir,exist_ok=True)
+    converter = Joint2BVHConvertor()
+    mean = np.load("checkpoints/t2m/rvq_nq6_dc512_nc512_noshare_qdp0.2/meta/mean.npy")
+    std = np.load("checkpoints/t2m/rvq_nq6_dc512_nc512_noshare_qdp0.2/meta/std.npy")
+    def inv_transform(data):
+        return data * std + mean
+    
+    # evaluate
     trans.eval()
     vq_model.eval()
     res_model.eval()
@@ -922,10 +939,11 @@ def evaluation_mask_transformer_test_plus_res(val_loader, vq_model, res_model, t
         num_mm_batch = 0
     else:
         num_mm_batch = 3
-    print("temp_R;temp_match;R_precision;matching_score_pred;token")
+    print("idx;temp_R;temp_match;token")
     for i, batch in enumerate(val_loader):
-        word_embeddings_batch, pos_one_hots_batch, clip_text_batch, sent_len_batch, pose_batch, m_length_batch, token_batch = batch
+        indices, word_embeddings_batch, pos_one_hots_batch, clip_text_batch, sent_len_batch, pose_batch, m_length_batch, token_batch = batch
         for idx in range(m_length_batch.shape[0]): # iterate over batch
+            data_index = indices[idx]
             word_embeddings = word_embeddings_batch[idx].unsqueeze(0)
             pos_one_hots = pos_one_hots_batch[idx].unsqueeze(0)
             clip_text = clip_text_batch[idx]
@@ -977,13 +995,47 @@ def evaluation_mask_transformer_test_plus_res(val_loader, vq_model, res_model, t
                 # pred_ids = torch.where(pred_ids == -1, 0, pred_ids)
 
                 pred_motions = vq_model.forward_decoder(pred_ids)
+                # TODO: 
                 # pred_motions = vq_model.forward_decoder(mids)
 
                 et_pred, em_pred = eval_wrapper.get_co_embeddings(word_embeddings, pos_one_hots, sent_len,
                                                                 pred_motions.clone(),
                                                                 m_length)
-
             pose = pose.cuda().float()
+            # save sample
+            pred_motions = pred_motions.detach().cpu().numpy()
+            pred_motions = pred_motions[0]
+            #print(pred_motions.shape, pred_motions) # (40,263)
+            data = inv_transform(pred_motions)
+            caption, joint_data = clip_text, data
+            #print(data.shape) # (40,263)
+            #print(caption)
+            #print(joint_data.shape) # (40,263)
+            #print("---->Sample %d: %s %d"%(k, caption, m_length))
+            animation_path = os.path.join(animation_dir, str(idx))
+            joint_path = os.path.join(joints_dir, str(idx))
+
+            os.makedirs(animation_path, exist_ok=True)
+            os.makedirs(joint_path, exist_ok=True)
+
+            joint_data = joint_data[:m_length]
+            joint = recover_from_ric(torch.from_numpy(joint_data).float(), 22).numpy()
+
+            bvh_path = os.path.join(animation_path, "sample%d_len%d_ik.bvh"%(data_index, m_length))
+            _, ik_joint = converter.convert(joint, filename=bvh_path, iterations=100)
+
+            bvh_path = os.path.join(animation_path, "sample%d_len%d.bvh" % (data_index, m_length))
+            _, joint = converter.convert(joint, filename=bvh_path, iterations=100, foot_ik=False)
+
+
+            save_path = os.path.join(animation_path, "sample%d_len%d.mp4"%(data_index, m_length))
+            ik_save_path = os.path.join(animation_path, "sample%d_len%d_ik.mp4"%(data_index, m_length))
+
+            plot_3d_motion(ik_save_path, t2m_kinematic_chain, ik_joint, title=caption, fps=20)
+            plot_3d_motion(save_path, t2m_kinematic_chain, joint, title=caption, fps=20)
+            np.save(os.path.join(joint_path, "sample%d_len%d.npy"%(data_index, m_length)), joint)
+            np.save(os.path.join(joint_path, "sample%d_len%d_ik.npy"%(data_index, m_length)), ik_joint)
+            # end saving sample
 
             et, em = eval_wrapper.get_co_embeddings(word_embeddings, pos_one_hots, sent_len, pose, m_length)
             motion_annotation_list.append(em)
@@ -1012,7 +1064,8 @@ def evaluation_mask_transformer_test_plus_res(val_loader, vq_model, res_model, t
             nb_sample += bs
             
             # print(f'sample: {clip_text}')
-            print(temp_R, temp_match, R_precision, matching_score_pred, token, sep=";")
+            print(data_index, temp_R, temp_match, token, sep=";")
+            assert False
 
     motion_annotation_np = torch.cat(motion_annotation_list, dim=0).cpu().numpy()
     motion_pred_np = torch.cat(motion_pred_list, dim=0).cpu().numpy()

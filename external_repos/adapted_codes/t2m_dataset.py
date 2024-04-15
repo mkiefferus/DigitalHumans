@@ -9,8 +9,7 @@ import codecs as cs
 
 
 def collate_fn(batch):
-    #batch.sort(key=lambda x: x[3], reverse=True)
-    #return default_collate(batch)
+    # batch.sort(key=lambda x: x[3], reverse=True)
     #TODO: revert
     return default_collate(batch)
 
@@ -183,14 +182,13 @@ class Text2MotionDatasetEval(data.Dataset):
         return len(self.data_dict) - self.pointer
 
     def __getitem__(self, item):
-        idx = self.pointer + item
-        data = self.data_dict[self.name_list[idx]]
+        data_idx = self.pointer + item
+        data = self.data_dict[self.name_list[data_idx]]
         # print("IDX, name, data", idx, self.name_list[idx], data)
         motion, m_length, text_list = data['motion'], data['length'], data['text']
         # Randomly select a caption
         text_data = random.choice(text_list)
         caption, tokens = text_data['caption'], text_data['tokens']
-
         if len(tokens) < self.opt.max_text_len:
             # pad with "unk"
             tokens = ['sos/OTHER'] + tokens + ['eos/OTHER']
@@ -231,7 +229,7 @@ class Text2MotionDatasetEval(data.Dataset):
                                      ], axis=0)
         # print(word_embeddings.shape, motion.shape)
         # print(tokens)
-        return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens)
+        return data_idx, word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens)
 
 
 class Text2MotionDataset(data.Dataset):

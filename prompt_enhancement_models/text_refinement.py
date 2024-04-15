@@ -10,6 +10,7 @@ from datetime import datetime
 import numpy as np
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+HUMAN_ML_DIR = "../external_repos/momask-codes/dataset/HumanML3D"
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])
 
@@ -70,7 +71,7 @@ def process_data(filenames:list[str]) -> tuple[str, dict[str, list[str]]]:
         Tuple[str, Dict[str, List[str]]]: A tuple containing the JSON string of motions and a dictionary of annotations.
     """
 
-    base_dir = "../external_repos/momask-codes/dataset/HumanML3D/texts"
+    base_dir = f"{HUMAN_ML_DIR}/texts"
 
     input_dict = {}
     annotations_dict = {}
@@ -196,16 +197,16 @@ def main():
     client = OpenAI()
 
     if args.folder_name:
-        target_folder = f"../prompt_enhancement/altered_texts/{args.folder_name}"
+        target_folder = f"{HUMAN_ML_DIR}/{args.folder_name}"
     else:
         timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        target_folder = f"../prompt_enhancement/altered_texts/altered_texts_{timestamp}"
+        target_folder = f"{HUMAN_ML_DIR}//altered_texts_{timestamp}"
 
     with open(f"../prompts/{args.system_prompt}", 'r') as file:
         system_prompt = json.load(file).get('system_prompt')
 
     if not os.path.exists(target_folder):
-        os.mkdir(target_folder)
+        os.makedirs(target_folder)
 
     refine_text(data_folder="../external_repos/momask-codes/dataset/HumanML3D/texts/", 
             output_folder=target_folder,

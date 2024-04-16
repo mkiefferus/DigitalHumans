@@ -939,7 +939,7 @@ def evaluation_mask_transformer_test_plus_res(val_loader, vq_model, res_model, t
         num_mm_batch = 0
     else:
         num_mm_batch = 3
-    print("idx;temp_R;temp_match;token")
+    print("idx;temp_match;token")
     for i, batch in enumerate(val_loader):
         indices, word_embeddings_batch, pos_one_hots_batch, clip_text_batch, sent_len_batch, pose_batch, m_length_batch, token_batch = batch
         for idx in range(m_length_batch.shape[0]): # iterate over batch
@@ -1064,8 +1064,7 @@ def evaluation_mask_transformer_test_plus_res(val_loader, vq_model, res_model, t
             nb_sample += bs
             
             # print(f'sample: {clip_text}')
-            print(data_index, temp_R, temp_match, token, sep=";")
-            assert False
+            print(data_index.numpy(), temp_match, token, sep=";")
 
     motion_annotation_np = torch.cat(motion_annotation_list, dim=0).cpu().numpy()
     motion_pred_np = torch.cat(motion_pred_list, dim=0).cpu().numpy()

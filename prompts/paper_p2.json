@@ -1,0 +1,5 @@
+{
+    "system_prompt": "Please provide a detailed expansion of one coarse-grained motion description. The new description should be in chronological order. It should specify spatial position changes (including angle changes) of relevant body parts.",
+    "user": "A person squats down then jumps.",
+    "assistant": "The person begins in a standing position with his feet shoulderwidth apart and his arms at his sides. He initiates the squat by bending his knees and lowering his hips towards the ground. As he descends, his torso remains upright and his arms swing back behind them for balance. To initiate the jump, the person pushes through his feet and extends his legs and hips explosively. As he leaves the ground, his arms swing forward and upward to help propel them upward. His legs remain relaxed in the air. He lands on the balls of his feet and then gradually lowers his heels to the ground, absorbing the impact with a slight bend in his knees."
+}

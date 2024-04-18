@@ -8,11 +8,36 @@ import sys
 import argparse
 from datetime import datetime
 import numpy as np
+import yaml
 from utils.utils import ROOT_DIR
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/HumanML3D")
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])
+
+def _continue_folder(continue_folder_path:str, data_folder_path:str, refine_specific_samples_txt_path:str) -> list[str]:
+    """(Helperfunction) Continue refining text at checkpoint"""
+
+    # Check if path exists
+    if not os.path.isdir(continue_folder_path):
+        raise NotADirectoryError(f"The specified path '{continue_folder_path}' is not a directory or does not exist.")
+
+    # Load the names of all files in that folder that end with .txt
+    continue_file_names = {file_name.split('.')[0] for file_name in os.listdir(continue_folder_path) if file_name.endswith(".txt")}
+    data_file_names = {file_name.split('.')[0] for file_name in os.listdir(data_folder_path) if file_name.endswith(".txt")}
+
+    remaining_files = list(data_file_names - continue_file_names)
+
+    # If a refine_specific_samples_txt_path is provided, only process the files in that list
+    if refine_specific_samples_txt_path is not None:
+        with open(refine_specific_samples_txt_path, 'r') as file:
+            file_names = file.read().splitlines()
+        remaining_files = [f for f in remaining_files if f in file_names]
+
+    print(f"Continuing from folder: {continue_folder_path} \n -> {len(remaining_files)-len(continue_file_names)}/{len(remaining_files)} files remaining.")
+
+    return remaining_files
 
 def _annotate_motion(motion, nlp):
     """Add part of speech tags to motion description."""
@@ -145,20 +170,30 @@ def refine_text(data_folder:str,
                 model:str="gpt-3.5-turbo", 
                 client=OpenAI(), 
                 refine_specific_samples_txt_path=None,
-                stop_after_n_samples=np.inf):
+                stop_after_n_batches=np.inf,
+                continue_previous=None):
     """Refines text in datafolder using given model and system prompt"""
 
-    # Get list of filenames to process (without .txt)
-    if refine_specific_samples_txt_path is not None:
-        with open(refine_specific_samples_txt_path, 'r') as file:
-            file_names = file.read().splitlines()
-        files = [f[:-4] for f in os.listdir(data_folder) if f.endswith('.txt') and f.split('.')[0] in file_names]
+    if continue_previous is not None:
+        files = _continue_folder(continue_previous, data_folder, refine_specific_samples_txt_path)
+        output_folder = continue_previous
+
     else:
-        files = [f[:-4] for f in os.listdir(data_folder) if f.endswith('.txt')]
+        # Get list of filenames to process (without .txt)
+        if refine_specific_samples_txt_path is not None:
+            with open(refine_specific_samples_txt_path, 'r') as file:
+                file_names = file.read().splitlines()
+            files = [f[:-4] for f in os.listdir(data_folder) if f.endswith('.txt') and f.split('.')[0] in file_names]
+        else:
+            files = [f[:-4] for f in os.listdir(data_folder) if f.endswith('.txt')]
+
     print(f"Total files found: {len(files)}")
 
     # number of batches
     num_batches = (len(files) + batch_size - 1) // batch_size  # This ensures all files are included even if the last batch is smaller
+
+    if refine_specific_samples_txt_path is not None:
+        num_batches = min(num_batches, stop_after_n_batches)
 
     progress = tqdm(range(num_batches), desc="Processing batches")
 
@@ -173,7 +208,7 @@ def refine_text(data_folder:str,
         except Exception as e:
             print(f"An error occurred while processing batch {i + 1} ({batch}): {e}")
 
-        if i == stop_after_n_samples -1:
+        if i == stop_after_n_batches -1:
             break
 
         progress.update(1)
@@ -190,6 +225,8 @@ def main():
                         default='extra_sentence.json')
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size for text enhancement")
     parser.add_argument("--early_stop", type=int, default=np.inf, help="Stop after n refined samples for testing purposes")
+    parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
+    parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine only all samples. Default: refine test samples only")
     args = parser.parse_args()
 
     print(f"Using {DEVICE} device")
@@ -201,22 +238,46 @@ def main():
     else:
         timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         target_folder = os.path.join(HUMAN_ML_DIR, f"altered_texts_{timestamp}")
+        
+    target_folder = args.continue_previous if args.continue_previous is not None else target_folder
+
+    if not os.path.exists(target_folder):
+        os.makedirs(target_folder)
 
     with open(f"../prompts/{args.system_prompt}", 'r') as file:
         system_prompt = json.load(file).get('system_prompt')
 
-    if not os.path.exists(target_folder):
-        os.makedirs(target_folder)
+    if not args.refine_all_samples:
+        refine_specific_samples_txt_path = "../external_repos/momask-codes/dataset/HumanML3D/test.txt"
+
+    _config = {
+        "config": {
+            "folder_name": target_folder,
+            "system_prompt": args.system_prompt,
+            "client": str(client),
+            "batch_size": args.batch_size,
+            "early_stop": args.early_stop,
+            "continue_previous": args.continue_previous,
+            "refine_specific_samples_txt_path": refine_specific_samples_txt_path
+        }
+    }
+    print("Configuration: ", _config)
+    
+    # Write configuration to a YAML file
+    config_path = os.path.join(target_folder, 'config.yaml')
+    with open(config_path, 'w') as yaml_file:
+        yaml.dump(_config, yaml_file, default_flow_style=False)
+
 
     refine_text(data_folder="../external_repos/momask-codes/dataset/HumanML3D/texts/", 
             output_folder=target_folder,
             system_prompt=system_prompt,
             batch_size=args.batch_size,
             client=client,
-            refine_specific_samples_txt_path="../external_repos/momask-codes/dataset/HumanML3D/test.txt",
-            stop_after_n_samples=args.early_stop
+            refine_specific_samples_txt_path=refine_specific_samples_txt_path,
+            stop_after_n_batches=args.early_stop,
+            continue_previous=args.continue_previous
         )
-
 
 
 if __name__ == "__main__":

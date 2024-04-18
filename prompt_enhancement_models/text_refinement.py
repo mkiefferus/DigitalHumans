@@ -9,9 +9,10 @@ import argparse
 from datetime import datetime
 import numpy as np
 import yaml
+from utils.utils import ROOT_DIR
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-HUMAN_ML_DIR = "../external_repos/momask-codes/dataset/HumanML3D"
+HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/HumanML3D")
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])
 
@@ -95,7 +96,7 @@ def process_data(filenames:list[str]) -> tuple[str, dict[str, list[str]]]:
         Tuple[str, Dict[str, List[str]]]: A tuple containing the JSON string of motions and a dictionary of annotations.
     """
 
-    base_dir = f"{HUMAN_ML_DIR}/texts"
+    base_dir = os.path.join(HUMAN_ML_DIR, "texts")
 
     input_dict = {}
     annotations_dict = {}
@@ -233,11 +234,11 @@ def main():
     client = OpenAI()
 
     if args.folder_name:
-        target_folder = f"{HUMAN_ML_DIR}/{args.folder_name}"
+        target_folder = os.path.join(HUMAN_ML_DIR, args.folder_name)
     else:
         timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        target_folder = f"{HUMAN_ML_DIR}//altered_texts_{timestamp}"
-    
+        target_folder = os.path.join(HUMAN_ML_DIR, f"altered_texts_{timestamp}")
+        
     target_folder = args.continue_previous if args.continue_previous is not None else target_folder
 
     if not os.path.exists(target_folder):

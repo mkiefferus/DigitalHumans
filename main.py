@@ -7,7 +7,6 @@ import os
 
 from utils.utils import SESSION_ID, MOMASK_REPO_DIR, OUT_DIR
 from utils.logging import init_logging, end_logging
-from prompt_enhancement_models import Mistral
 
 def parse_args():
     # all args that cannot be matched to the Trainer or DataLoader classes and are

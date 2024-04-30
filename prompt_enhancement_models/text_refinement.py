@@ -56,7 +56,7 @@ def _annotate_motion(motion, nlp):
         pos_list.append(token.pos_)
     return word_list, pos_list
 
-def export_data(data:json, annotations_dict:dict[str:list[str]], output_folder:str):
+def export_data(data:json, annotations_dict, output_folder:str):
     """Generate dataset with refined text"""
     
     try: 
@@ -86,7 +86,7 @@ def export_data(data:json, annotations_dict:dict[str:list[str]], output_folder:s
                 altered_file.write(motion + '#' + motion_tag + '#' + annotation + '\n')
 
 
-def process_data(filenames:list[str]) -> tuple[str, dict[str, list[str]]]:
+def process_data(filenames):
     """Process files into JSON format and extract annotations.
 
     Args:
@@ -118,7 +118,7 @@ def process_data(filenames:list[str]) -> tuple[str, dict[str, list[str]]]:
 
                 # Append content and annotations to respective lists
                 input_dict[filename].append(content)
-                annotations_dict[filename].append(f"#{a1}#{a2}")
+                annotations_dict[filename].append(f"{a1}#{a2}")
 
         # Handle exceptions
         except FileNotFoundError:

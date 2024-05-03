@@ -65,25 +65,24 @@ def export_data(data:json, annotations_dict, output_folder:str):
         print("Could not locate en_core_web_sm model, please install with \"python -m spacy download en_core_web_sm\"")
         exit(1)
 
-    for file_name, output in data.items():
+    for file_name, motions in data.items():
 
         # Check if annotations exist for the filename
         if file_name not in annotations_dict:
             raise KeyError(f"Annotations missing for file: {file_name}")
         
         altered_text_path = os.path.join(output_folder, file_name + ".txt")
-        open(altered_text_path, 'w').close()  # Clear the file
-
-        with open(altered_text_path, 'a') as altered_file:
+        with open(altered_text_path, 'w') as altered_file:
             
-            for motion, annotation in zip(output, annotations_dict[file_name]):
-                
+            for motion_key, content in motions.items():
+                annotation = annotations_dict[file_name][motion_key] if motion_key in annotations_dict[file_name] else 'No annotation'
+
                 # Add part of speech tags to motion description
-                word_list, pose_list = _annotate_motion(motion, nlp)
-                motion_tag = ' '.join(['%s/%s' % (word_list[i], pose_list[i]) for i in range(len(word_list))])
+                doc = nlp(content)
+                motion_tag = ' '.join([f"{token.text}/{token.pos_}" for token in doc])
 
                 # Write final refined text to file
-                altered_file.write(motion + '#' + motion_tag + '#' + annotation + '\n')
+                altered_file.write(f"{content}#{motion_tag}#{annotation}\n")
 
 
 def process_data(filenames):
@@ -93,7 +92,7 @@ def process_data(filenames):
         filenames (List[str]): List of filenames to be processed.
 
     Returns:
-        Tuple[str, Dict[str, List[str]]]: A tuple containing the JSON string of motions and a dictionary of annotations.
+        Tuple[str, Dict[str, Dict[str]]]: A tuple containing the JSON string of motions and a dictionary of annotations.
     """
 
     base_dir = os.path.join(HUMAN_ML_DIR, "texts")
@@ -113,12 +112,15 @@ def process_data(filenames):
             with open(file_path, 'r') as opened_file:
                 lines = opened_file.readlines()
             
-            for line in lines:
+            lines_dict = {}
+            for i, line in enumerate(lines):
                 content, _, a1, a2 = line.strip().rsplit("#", 3)
 
                 # Append content and annotations to respective lists
-                input_dict[filename].append(content)
+                lines_dict[f"motion{i+1}"] = content
                 annotations_dict[filename].append(f"{a1}#{a2}")
+
+            input_dict[filename] = lines_dict
 
         # Handle exceptions
         except FileNotFoundError:
@@ -136,30 +138,36 @@ def get_text_refinement(data:json, system_prompt:str, model:str, client) -> json
     """Use OpenAI API for text refinement."""
 
     batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary and are given a JSON of format: 
-        "filename1": [
-        "motion1",
-        "motion2",
-        "motion3",
-        ],
-        "filename2": [
-        "motion4",
-        "motion5",
-        ]
+        "filename1": {
+        "motion1":sentence1,
+        "motion2":sentence2,
+        "motion3":sentence3,
+        },
+        "filename2": {
+        "motion4":sentence4,
+        "motion5":sentence5,
+        }
         and so on. 
         You output in the JSON format. Your answer will be in the same string, no extra strings.
-        You will: keep the order of the motions, elaborate each motion but stay concise, treat each motion as a separate task and go through all of them, only focus on the motion description.
-        You will NOT: explain if it is the first or second motion, skip motions.
+        You will: keep the order of the motions, elaborate each motion, only focus on the motion description.
+        You will NOT: explain if it is the first or second motion, skip motions, describe muscle details.
+        It is ESSENTIAL, that you treat each motion/element in the list as a separate task and go through all of them, not leaving out any.
         """
     
     new_system_prompt = batch_prompt + system_prompt
 
+
+
     new_prompt = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": new_system_prompt},
-            {"role": "user", "content": f"list of strings: {data}"}
+            {"role": "system", 
+             "content": new_system_prompt},
+            {"role": "user", 
+             "content": f"list of strings: {data}"}
             ]
         )
+    
     return json.loads(new_prompt.choices[0].message.content)
 
 
@@ -244,11 +252,11 @@ def main():
     if not os.path.exists(target_folder):
         os.makedirs(target_folder)
 
-    with open(f"../prompts/{args.system_prompt}", 'r') as file:
+    with open(f"prompts/{args.system_prompt}", 'r') as file:
         system_prompt = json.load(file).get('system_prompt')
 
     if not args.refine_all_samples:
-        refine_specific_samples_txt_path = "../external_repos/momask-codes/dataset/HumanML3D/test.txt"
+        refine_specific_samples_txt_path = "external_repos/momask-codes/dataset/HumanML3D/test.txt"
 
     _config = {
         "config": {
@@ -269,7 +277,7 @@ def main():
         yaml.dump(_config, yaml_file, default_flow_style=False)
 
 
-    refine_text(data_folder="../external_repos/momask-codes/dataset/HumanML3D/texts/", 
+    refine_text(data_folder="external_repos/momask-codes/dataset/HumanML3D/texts/", 
             output_folder=target_folder,
             system_prompt=system_prompt,
             batch_size=args.batch_size,

@@ -65,6 +65,7 @@ def export_data(data:json, annotations_dict, output_folder:str):
         print("Could not locate en_core_web_sm model, please install with \"python -m spacy download en_core_web_sm\"")
         exit(1)
 
+
     for file_name, motions in data.items():
 
         # Check if annotations exist for the filename
@@ -85,7 +86,7 @@ def export_data(data:json, annotations_dict, output_folder:str):
                 altered_file.write(f"{content}#{motion_tag}#{annotation}\n")
 
 
-def process_data(filenames):
+def process_data(filenames:list):
     """Process files into JSON format and extract annotations.
 
     Args:
@@ -134,68 +135,63 @@ def process_data(filenames):
     return json_input, annotations_dict
 
 
-def get_text_refinement(data:json, system_prompt:str, example_prompt, model:str, client) -> json:
+def get_text_refinement(data, system_prompt:str, example_prompt, model:str, client, BATCH_PROCESSING:bool=False) -> json:
     """Use OpenAI API for text refinement."""
 
-    # batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary and are given a JSON of format: 
-    #     "filename1": {
-    #     "motion1":sentence1,
-    #     "motion2":sentence2,
-    #     "motion3":sentence3,
-    #     },
-    #     "filename2": {
-    #     "motion4":sentence4,
-    #     "motion5":sentence5,
-    #     }
-    #     and so on.
-    #     You output in the JSON format. Your answer will be in the same string, no extra strings. Just give the JSON format.
-    #     You will: keep the order of the motions, elaborate each motion, only focus on the motion description.
-    #     You will NOT: explain if it is the first or second motion, skip motions, describe muscle details.
-    #     It is ESSENTIAL, that you treat each motion/element in the list as a separate task and go through all of them, not leaving out any.
-    #     """
+    if BATCH_PROCESSING:
+        batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary. Your task is to generate descriptions for a given list of motions represented in a JSON format. 
+        Each motion is associated with a specific filename and is identified uniquely. The descriptions should focus solely on the motion itself and avoid mentioning body parts unless integral to the motion.
 
-    batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary. Your task is to generate descriptions for a given list of motions represented in a JSON format. 
-    Each motion is associated with a specific filename and is identified uniquely. The descriptions should focus solely on the motion itself and avoid mentioning body parts unless integral to the motion.
-
-        Format of input JSON:
-        {
-            "filename1": {
-                "motion1": "brief description",
-                "motion2": "brief description",
-                "motion3": "brief description"
-            },
-            "filename2": {
-                "motion4": "brief description",
-                "motion5": "brief description"
+            Format of input JSON:
+            {
+                "filename1": {
+                    "motion1": "brief description",
+                    "motion2": "brief description",
+                    "motion3": "brief description"
+                },
+                "filename2": {
+                    "motion4": "brief description",
+                    "motion5": "brief description"
+                }
+                // More files and motions can follow the same pattern.
             }
-            // More files and motions can follow the same pattern.
-        }
 
-        Required output format:
-        Your output must also be in JSON format. Each motion description must be elaborate, maintaining the order of the motions as presented in the input. 
-        Do not skip any motions or include descriptions of muscle details. 
-        Each motion should be described in one or two sentences that elaborate on the brief description, without changing the nature of the motion described.
+            Required output format:
+            Your output must also be in JSON format. Each motion description must be elaborate, maintaining the order of the motions as presented in the input. 
+            Do not skip any motions or include descriptions of muscle details. 
+            Each motion should be described in one or two sentences that elaborate on the brief description, without changing the nature of the motion described.
 
-        Example of an optimal output:
-        {
-            "filename1": {
-                "motion1": "The torso sways slightly to the left, while the arms remain still. The legs move in response to maintain balance.",
-                "motion2": "The legs move sideways to the left and then to the right, with minimal movement from the upper body.",
-                "motion3": "The legs move in a fluid motion, stepping to the right and crossing the left foot behind the right, before returning to the starting position."
-            },
-            "filename2": {
-                "motion1": "The entire body bounces up and down as the figure performs jumping jacks, with arms moving up and out.",
-                "motion2": "The torso bobs up and down three times as the man does jumping jacks, with arms extended and legs moving in a small circle.",
-                "motion3": "The person's entire body moves in a fluid motion, bouncing up and down while performing jumping jacks."
+            Example of an optimal output:
+            {
+                "filename1": {
+                    "motion1": "The torso sways slightly to the left, while the arms remain still. The legs move in response to maintain balance.",
+                    "motion2": "The legs move sideways to the left and then to the right, with minimal movement from the upper body.",
+                    "motion3": "The legs move in a fluid motion, stepping to the right and crossing the left foot behind the right, before returning to the starting position."
+                },
+                "filename2": {
+                    "motion1": "The entire body bounces up and down as the figure performs jumping jacks, with arms moving up and out.",
+                    "motion2": "The torso bobs up and down three times as the man does jumping jacks, with arms extended and legs moving in a small circle.",
+                    "motion3": "The person's entire body moves in a fluid motion, bouncing up and down while performing jumping jacks."
+                }
             }
-        }
-"""
+        """
+
+        # Load example prompts for assistant and user
+        example_prompt = example_prompt.get('batch')
+        ex_user = json.dumps(example_prompt.get('user'), indent=4)
+        ex_assistant = json.dumps(example_prompt.get('assistant'), indent=4)
+
+    # Account for single file processing
+    else:
+        batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary. You receive an instruction and a sentence. 
+        Your task is to generate a detailed description of the motion in the sentence. The description should focus solely on the motion itself and avoid mentioning body parts.
+        """
+        example_prompt = example_prompt.get('single')
+        ex_user = json.dumps(example_prompt.get('user'))
+        ex_assistant = json.dumps(example_prompt.get('assistant'))
 
     new_system_prompt = batch_prompt + system_prompt
 
-    # Load example prompts for assistant and user
-    ex_user = json.dumps(example_prompt.get('user'), indent=4)
-    ex_assistant = json.dumps(example_prompt.get('assistant'), indent=4)
 
     new_prompt = client.chat.completions.create(
         model=model,
@@ -213,10 +209,14 @@ def get_text_refinement(data:json, system_prompt:str, example_prompt, model:str,
     
     refined_text = new_prompt.choices[0].message.content
     
-    # Cut everything before the first '{' and after the last '}'
-    refined_text = refined_text[refined_text.find('{'):refined_text.rfind('}')+1]
+    if BATCH_PROCESSING:
+        # Cut everything before the first '{' and after the last '}'
+        refined_text = refined_text[refined_text.find('{'):refined_text.rfind('}')+1]
+        
+        return json.loads(refined_text)
     
-    return json.loads(refined_text)
+    else:
+        return refined_text
 
 
 def refine_text(data_folder:str, 
@@ -246,30 +246,58 @@ def refine_text(data_folder:str,
 
     print(f"Total files found: {len(files)}")
 
-    # number of batches
-    num_batches = (len(files) + batch_size - 1) // batch_size  # This ensures all files are included even if the last batch is smaller
+    BATCH_PROCESSING = False if batch_size < 1 else True
 
-    if refine_specific_samples_txt_path is not None:
-        num_batches = min(num_batches, stop_after_n_batches)
 
-    progress = tqdm(range(num_batches), desc="Processing batches")
 
-    for i in progress:
-        batch = files[i*batch_size:(i+1)*batch_size]
+    if BATCH_PROCESSING:
 
-        try:
-            input, annotations = process_data(batch)
-            data = get_text_refinement(data=input, system_prompt=system_prompt, example_prompt=example_prompt, model=model, client=client)
-            export_data(data=data, annotations_dict=annotations, output_folder=output_folder)
+        # number of batches
+        num_batches = (len(files) + batch_size - 1) // batch_size  # This ensures all files are included even if the last batch is smaller
 
-        except Exception as e:
-            print(f"An error occurred while processing batch {i + 1} ({batch}): {e}")
+        if refine_specific_samples_txt_path is not None:
+            num_batches = min(num_batches, stop_after_n_batches)
 
-        if i == stop_after_n_batches -1:
-            break
+        progress = tqdm(range(num_batches), desc="Processing batches")
 
-        progress.update(1)
-    progress.close()
+        for i in progress:
+            batch = files[i*batch_size:(i+1)*batch_size]
+
+            try:
+                input, annotations = process_data(batch) # BATCH_PROCESSING is False
+                data = get_text_refinement(data=input, system_prompt=system_prompt, example_prompt=example_prompt, model=model, client=client, BATCH_PROCESSING=BATCH_PROCESSING)
+                export_data(data=data, annotations_dict=annotations, output_folder=output_folder)
+
+            except Exception as e:
+                print(f"An error occurred while processing batch {i + 1} ({batch}): {e}")
+
+            if i == stop_after_n_batches -1:
+                break
+
+            progress.update(1)
+        progress.close()
+
+    # Process files one by one
+    else:
+        files = files[:stop_after_n_batches]
+
+        for file in tqdm(files, desc=f"Processing files"):
+
+            try:
+                input, annotations = process_data([file]) # BATCH_PROCESSING is True
+
+                # Convert input and annotions to dict
+                input = json.loads(input)
+
+                for motion, desc in input[file].items():
+
+                    refined_text = get_text_refinement(data=desc, system_prompt=system_prompt, example_prompt=example_prompt, model=model, client=client, BATCH_PROCESSING=BATCH_PROCESSING)
+                    input[file][motion] = refined_text
+                    export_data(data=input, annotations_dict=annotations, output_folder=output_folder)
+
+            except Exception as e:
+                    print(f"An error occurred while processing file {file}: {e}")
+
 
     print("Text refinement complete.")
 

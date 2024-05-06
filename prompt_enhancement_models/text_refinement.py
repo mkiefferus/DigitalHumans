@@ -9,7 +9,7 @@ import argparse
 from datetime import datetime
 import numpy as np
 import yaml
-from utils.utils import ROOT_DIR
+from utils.utils import ROOT_DIR, MOMASK_REPO_DIR
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/HumanML3D")
@@ -134,29 +134,68 @@ def process_data(filenames):
     return json_input, annotations_dict
 
 
-def get_text_refinement(data:json, system_prompt:str, model:str, client) -> json:
+def get_text_refinement(data:json, system_prompt:str, example_prompt, model:str, client) -> json:
     """Use OpenAI API for text refinement."""
 
-    batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary and are given a JSON of format: 
-        "filename1": {
-        "motion1":sentence1,
-        "motion2":sentence2,
-        "motion3":sentence3,
-        },
-        "filename2": {
-        "motion4":sentence4,
-        "motion5":sentence5,
+    # batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary and are given a JSON of format: 
+    #     "filename1": {
+    #     "motion1":sentence1,
+    #     "motion2":sentence2,
+    #     "motion3":sentence3,
+    #     },
+    #     "filename2": {
+    #     "motion4":sentence4,
+    #     "motion5":sentence5,
+    #     }
+    #     and so on.
+    #     You output in the JSON format. Your answer will be in the same string, no extra strings. Just give the JSON format.
+    #     You will: keep the order of the motions, elaborate each motion, only focus on the motion description.
+    #     You will NOT: explain if it is the first or second motion, skip motions, describe muscle details.
+    #     It is ESSENTIAL, that you treat each motion/element in the list as a separate task and go through all of them, not leaving out any.
+    #     """
+
+    batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary. Your task is to generate descriptions for a given list of motions represented in a JSON format. 
+    Each motion is associated with a specific filename and is identified uniquely. The descriptions should focus solely on the motion itself and avoid mentioning body parts unless integral to the motion.
+
+        Format of input JSON:
+        {
+            "filename1": {
+                "motion1": "brief description",
+                "motion2": "brief description",
+                "motion3": "brief description"
+            },
+            "filename2": {
+                "motion4": "brief description",
+                "motion5": "brief description"
+            }
+            // More files and motions can follow the same pattern.
         }
-        and so on. 
-        You output in the JSON format. Your answer will be in the same string, no extra strings.
-        You will: keep the order of the motions, elaborate each motion, only focus on the motion description.
-        You will NOT: explain if it is the first or second motion, skip motions, describe muscle details.
-        It is ESSENTIAL, that you treat each motion/element in the list as a separate task and go through all of them, not leaving out any.
-        """
-    
+
+        Required output format:
+        Your output must also be in JSON format. Each motion description must be elaborate, maintaining the order of the motions as presented in the input. 
+        Do not skip any motions or include descriptions of muscle details. 
+        Each motion should be described in one or two sentences that elaborate on the brief description, without changing the nature of the motion described.
+
+        Example of an optimal output:
+        {
+            "filename1": {
+                "motion1": "The torso sways slightly to the left, while the arms remain still. The legs move in response to maintain balance.",
+                "motion2": "The legs move sideways to the left and then to the right, with minimal movement from the upper body.",
+                "motion3": "The legs move in a fluid motion, stepping to the right and crossing the left foot behind the right, before returning to the starting position."
+            },
+            "filename2": {
+                "motion1": "The entire body bounces up and down as the figure performs jumping jacks, with arms moving up and out.",
+                "motion2": "The torso bobs up and down three times as the man does jumping jacks, with arms extended and legs moving in a small circle.",
+                "motion3": "The person's entire body moves in a fluid motion, bouncing up and down while performing jumping jacks."
+            }
+        }
+"""
+
     new_system_prompt = batch_prompt + system_prompt
 
-
+    # Load example prompts for assistant and user
+    ex_user = json.dumps(example_prompt.get('user'), indent=4)
+    ex_assistant = json.dumps(example_prompt.get('assistant'), indent=4)
 
     new_prompt = client.chat.completions.create(
         model=model,
@@ -164,16 +203,26 @@ def get_text_refinement(data:json, system_prompt:str, model:str, client) -> json
             {"role": "system", 
              "content": new_system_prompt},
             {"role": "user", 
-             "content": f"list of strings: {data}"}
+             "content": ex_user},
+            {"role": "assistant", 
+             "content": ex_assistant},
+            {"role": "user",
+             "content": data}
             ]
         )
     
-    return json.loads(new_prompt.choices[0].message.content)
+    refined_text = new_prompt.choices[0].message.content
+    
+    # Cut everything before the first '{' and after the last '}'
+    refined_text = refined_text[refined_text.find('{'):refined_text.rfind('}')+1]
+    
+    return json.loads(refined_text)
 
 
 def refine_text(data_folder:str, 
                 output_folder:str, 
                 system_prompt:str, 
+                example_prompt,
                 batch_size:int=3, 
                 model:str="gpt-3.5-turbo", 
                 client=OpenAI(), 
@@ -210,7 +259,7 @@ def refine_text(data_folder:str,
 
         try:
             input, annotations = process_data(batch)
-            data = get_text_refinement(data=input, system_prompt=system_prompt, model=model, client=client)
+            data = get_text_refinement(data=input, system_prompt=system_prompt, example_prompt=example_prompt, model=model, client=client)
             export_data(data=data, annotations_dict=annotations, output_folder=output_folder)
 
         except Exception as e:
@@ -235,12 +284,41 @@ def main():
     parser.add_argument("--early_stop", type=int, default=np.inf, help="Stop after n refined samples for testing purposes")
     parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
     parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine only all samples. Default: refine test samples only")
+    parser.add_argument("--from_config", type=bool, default=False, help="Load configuration from config.yaml")
     args = parser.parse_args()
-
-    print(f"Using {DEVICE} device")
 
     client = OpenAI()
 
+    # Load args from config file if 'from_config'
+    if args.from_config:
+        with open(os.path.join(ROOT_DIR, "prompt_enhancement_models", "config.yaml"), 'r') as file:
+            config = yaml.load(file, Loader=yaml.FullLoader)
+
+        print("Overwriting args with config file...")
+
+        # Overwrite args with the ones from the config file
+        for arg, value in config.items():
+            setattr(args, arg, value)
+
+        # Set client and model
+        base_url = getattr(args, 'base_url', False)
+        api_key = getattr(args, 'api_key', False)
+
+        if base_url and api_key:
+            client = OpenAI(
+                base_url = base_url,
+                api_key=api_key
+            )
+
+    print(f"Using {DEVICE} device")
+
+    if args.early_stop == -1: # config file does not support np.inf
+        args.early_stop = np.inf
+
+    model = getattr(args, 'model', 'gpt-3.5-turbo')
+
+
+    # Ensure folder structure exists
     if args.folder_name:
         target_folder = os.path.join(HUMAN_ML_DIR, args.folder_name)
     else:
@@ -251,18 +329,24 @@ def main():
 
     if not os.path.exists(target_folder):
         os.makedirs(target_folder)
+        
+    # Load example prompt for model assistant and user
+    with open(os.path.join(ROOT_DIR, "prompts_examples" ,f"ex_{args.system_prompt}"), 'r') as file:
+        example_prompt = json.load(file)
 
+    # Load system prompt
     with open(f"prompts/{args.system_prompt}", 'r') as file:
         system_prompt = json.load(file).get('system_prompt')
 
     if not args.refine_all_samples:
-        refine_specific_samples_txt_path = "external_repos/momask-codes/dataset/HumanML3D/test.txt"
+        refine_specific_samples_txt_path = os.path.join(MOMASK_REPO_DIR, "dataset", "HumanML3D", "test.txt")
 
     _config = {
         "config": {
             "folder_name": target_folder,
             "system_prompt": args.system_prompt,
             "client": str(client),
+            "model": model,
             "batch_size": args.batch_size,
             "early_stop": args.early_stop,
             "continue_previous": args.continue_previous,
@@ -280,8 +364,10 @@ def main():
     refine_text(data_folder="external_repos/momask-codes/dataset/HumanML3D/texts/", 
             output_folder=target_folder,
             system_prompt=system_prompt,
+            example_prompt=example_prompt,
             batch_size=args.batch_size,
             client=client,
+            model=model,
             refine_specific_samples_txt_path=refine_specific_samples_txt_path,
             stop_after_n_batches=args.early_stop,
             continue_previous=args.continue_previous

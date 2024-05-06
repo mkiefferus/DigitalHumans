@@ -1,0 +1,22 @@
+{
+    "user": "{'000534': {'motion1': 'a person standing in place raises both arms to the side raising them above eye level.','motion2': 'the person is stretching arms out.','motion3': 'someone stretches both arms out to the side.'},'M000571': {'motion1': 'a person loses his balance towards his left and then steps back towards his right.','motion2': 'a person steps sideways to the left and then sideways to the right.','motion3': 'a person steps to the right while crossing left foot behind right foot, then steps back to the left.'},'014541': {'motion1': 'a figure does jumping jacks','motion2': 'the man does 3 jumping jacks','motion3': 'the person is doing jumping jacks'}",
+    "assistent": 
+        {
+            "000534": {
+                "motion1": "a person standing in place raises both arms to the side, lifting them above eye level while keeping them extended.",
+                "motion2": "the person extends both arms outwards away from the body, maintaining them at shoulder level.",
+                "motion3": "someone extends both arms out to the side with palms facing forward and fingers spread wide."
+            },
+            "M000571": {
+                "motion1": "a person shifts balance towards the left side, then steps back with the right foot to regain stability.",
+                "motion2": "a person moves sideways to the left by stepping out with the left foot, then repeats the movement to the right side.",
+                "motion3": "a person moves to the right by crossing the left foot behind the right foot, then steps back to the left to return to the starting position."
+            },
+            "014541": {
+                "motion1": "a figure performs jumping jacks by jumping out with both legs while simultaneously raising arms above the head, then returning to the initial position with arms by the sides.",
+                "motion2": "the man executes 3 consecutive jumping jacks, consisting of jumping out, arms raised overhead, and returning to the starting stance.",
+                "motion3": "the person engages in the continuous action of performing jumping jacks with arms and legs moving in synchrony."
+            }
+        }
+        
+}

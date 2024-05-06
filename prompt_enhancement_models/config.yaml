@@ -1,0 +1,7 @@
+system_prompt: limb_specific_v3.json
+batch_size: 3
+early_stop: -1
+base_url: 'http://192.168.178.40:11434/v1'
+api_key: 'ollama'
+model: llama3
+# model: llama3:8b-instruct-fp16

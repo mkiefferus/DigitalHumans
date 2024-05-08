@@ -184,7 +184,7 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
     # Account for single file processing
     else:
         batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary. You receive an instruction and a sentence. 
-        Your task is to generate a detailed description of the motion in the sentence. The description should focus solely on the motion itself and avoid mentioning body parts.
+        Your task is to generate a detailed description of the motion in the sentence. The description should focus solely on the motion itself and avoid mentioning body parts. Your answer is one, max two sentences. It must be below 70tokens/~60 words.
         """
         example_prompt = example_prompt.get('single')
         ex_user = json.dumps(example_prompt.get('user'))
@@ -279,7 +279,7 @@ def refine_text(data_folder:str,
 
     # Process files one by one
     else:
-        files = files[:stop_after_n_batches]
+        files = files[:min(stop_after_n_batches, len(files))]
 
         for file in tqdm(files, desc=f"Processing files"):
 

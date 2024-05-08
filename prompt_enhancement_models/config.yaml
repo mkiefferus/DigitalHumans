@@ -1,6 +1,6 @@
-system_prompt: limb_specific_v3.json
-batch_size: 3
-early_stop: -1
+system_prompt: paper_p1.json
+batch_size: -1 # -1 for no batching
+early_stop: -1 # -1 for not early stopping
 base_url: 'http://192.168.178.40:11434/v1'
 api_key: 'ollama'
 model: llama3

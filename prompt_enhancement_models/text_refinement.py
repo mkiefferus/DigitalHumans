@@ -9,10 +9,18 @@ import argparse
 from datetime import datetime
 import numpy as np
 import yaml
-from utils.utils import ROOT_DIR, MOMASK_REPO_DIR
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # the project root directory
+# CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # the project root directory
+LOG_DIR = os.path.join(ROOT_DIR, "out", "logs")
+EXTERNAL_REPOS_DIR = os.path.join(ROOT_DIR, "external_repos")
+MOMASK_REPO_DIR = os.path.join(EXTERNAL_REPOS_DIR, "momask-codes")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/HumanML3D")
+
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])
 
@@ -213,7 +221,7 @@ def refine_text(data_folder:str,
                 model:str="gpt-3.5-turbo", 
                 client=OpenAI(), 
                 refine_specific_samples_txt_path=None,
-                stop_after_n_batches=np.inf,
+                stop_after_n_batches=None,
                 continue_previous=None):
     """Refines text in datafolder using given model and system prompt"""
 
@@ -241,7 +249,7 @@ def refine_text(data_folder:str,
         # number of batches
         num_batches = (len(files) + batch_size - 1) // batch_size  # This ensures all files are included even if the last batch is smaller
 
-        if refine_specific_samples_txt_path is not None:
+        if refine_specific_samples_txt_path is not None and stop_after_n_batches is not None:
             num_batches = min(num_batches, stop_after_n_batches)
 
         progress = tqdm(range(num_batches), desc="Processing batches")
@@ -257,15 +265,17 @@ def refine_text(data_folder:str,
             except Exception as e:
                 print(f"An error occurred while processing batch {i + 1} ({batch}): {e}")
 
-            if i == stop_after_n_batches -1:
-                break
+            if stop_after_n_batches: # not None
+                if i == stop_after_n_batches -1:
+                    break
 
             progress.update(1)
         progress.close()
 
     # Process files one by one
     else:
-        files = files[:min(stop_after_n_batches, len(files))]
+        num_files = len(files) if stop_after_n_batches is None else min(stop_after_n_batches, len(files))
+        files = files[:num_files]
 
         for file in tqdm(files, desc=f"Processing files"):
 
@@ -294,10 +304,11 @@ def main():
                         help="Specifies the target folder name where generated texts are saved to")
     parser.add_argument("--system_prompt", type=str, help="Name of JSON file containing system prompt",
                         default='extra_sentence.json')
-    parser.add_argument("--batch_size", type=int, default=1, help="Batch size for text enhancement")
-    parser.add_argument("--early_stop", type=int, default=np.inf, help="Stop after n refined samples for testing purposes")
+    parser.add_argument("--batch_size", type=int, default=1, help="Batch size as in number of .txt files being forwarded to the LLM at the same time")
+    parser.add_argument("--early_stop", type=int, default=None, help="Stop after n refined samples for testing purposes")
     parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
-    parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine only all samples. Default: refine test samples only")
+    parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine all samples. Default: refine test samples only")
+    parser.add_argument("--use_cross_sample_information", type=bool, default=False, help="Use information from multiple samples of the same text file to output enhanced samples with more information. Makes batch_size arg invalid")
     parser.add_argument("--from_config", type=bool, default=False, help="Load configuration from config.yaml")
     args = parser.parse_args()
 
@@ -323,11 +334,9 @@ def main():
                 base_url = base_url,
                 api_key=api_key
             )
+            print("Here")
 
     print(f"Using {DEVICE} device")
-
-    if args.early_stop == -1: # config file does not support np.inf
-        args.early_stop = np.inf
 
     model = getattr(args, 'model', 'gpt-3.5-turbo')
 
@@ -349,11 +358,14 @@ def main():
         example_prompt = json.load(file)
 
     # Load system prompt
-    with open(f"prompts/{args.system_prompt}", 'r') as file:
+    system_prompt_path = os.path.join(ROOT_DIR, "prompts", args.system_prompt)
+    with open(system_prompt_path, 'r') as file:
         system_prompt = json.load(file).get('system_prompt')
 
     if not args.refine_all_samples:
         refine_specific_samples_txt_path = os.path.join(MOMASK_REPO_DIR, "dataset", "HumanML3D", "test.txt")
+    else:
+        refine_specific_samples_txt_path = None
 
     _config = {
         "config": {
@@ -375,7 +387,7 @@ def main():
         yaml.dump(_config, yaml_file, default_flow_style=False)
 
 
-    refine_text(data_folder="external_repos/momask-codes/dataset/HumanML3D/texts/", 
+    refine_text(data_folder=os.path.join(HUMAN_ML_DIR, "texts"), 
             output_folder=target_folder,
             system_prompt=system_prompt,
             example_prompt=example_prompt,

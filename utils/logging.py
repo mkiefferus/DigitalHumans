@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-from utils.utils import LOG_DIR, SESSION_ID
+from utils import LOG_DIR, SESSION_ID
 
 def init_logging(experiment_name, run_name):
     log_name = f"{experiment_name}_{run_name}_{SESSION_ID}.log"

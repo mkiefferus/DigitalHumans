@@ -21,7 +21,7 @@
             }
         },
     "single": {
-        "user": "a person standing in place raises both arms to the side raising them above eye level.",
-        "assistent": "a person standing in place raises both arms to the side, lifting them above eye level while keeping them extended."
+        "user": "a person is walking forward briskly.",
+        "assistent": "As a person walks forward briskly, their legs alternate in forceful strides, arms swing in sync opposite to the legs, torso slightly leans forward to propel movement, neck remains steady, buttocks engage to drive the legs, and waist subtly flexes to maintain balance and momentum."
     }
 }

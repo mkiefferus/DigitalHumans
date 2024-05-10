@@ -160,20 +160,6 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
             Your output must also be in JSON format. Each motion description must be elaborate, maintaining the order of the motions as presented in the input. 
             Do not skip any motions or include descriptions of muscle details. 
             Each motion should be described in one or two sentences that elaborate on the brief description, without changing the nature of the motion described.
-
-            Example of an optimal output:
-            {
-                "filename1": {
-                    "motion1": "The torso sways slightly to the left, while the arms remain still. The legs move in response to maintain balance.",
-                    "motion2": "The legs move sideways to the left and then to the right, with minimal movement from the upper body.",
-                    "motion3": "The legs move in a fluid motion, stepping to the right and crossing the left foot behind the right, before returning to the starting position."
-                },
-                "filename2": {
-                    "motion1": "The entire body bounces up and down as the figure performs jumping jacks, with arms moving up and out.",
-                    "motion2": "The torso bobs up and down three times as the man does jumping jacks, with arms extended and legs moving in a small circle.",
-                    "motion3": "The person's entire body moves in a fluid motion, bouncing up and down while performing jumping jacks."
-                }
-            }
         """
 
         # Load example prompts for assistant and user

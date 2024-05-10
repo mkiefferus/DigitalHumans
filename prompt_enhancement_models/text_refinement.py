@@ -143,11 +143,11 @@ def process_data(filenames:list):
     return json_input, annotations_dict
 
 
-def get_text_refinement(data, system_prompt:str, example_prompt, model:str, client, BATCH_PROCESSING:bool=False) -> json:
+def get_text_refinement(data, system_prompt:str, example_prompt, model:str, client, BATCH_PROCESSING:bool=False, use_cross_sample_information:bool=False) -> json:
     """Use OpenAI API for text refinement."""
 
     if BATCH_PROCESSING:
-        batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary. Your task is to generate descriptions for a given list of motions represented in a JSON format. 
+        batch_prompt = """You are an average human known for your detailed motion descriptions and simple vocabulary. Your task is to generate descriptions for a given list of motions represented in a JSON format. 
         Each motion is associated with a specific filename and is identified uniquely. The descriptions should focus solely on the motion itself and avoid mentioning body parts unless integral to the motion.
 
             Format of input JSON:
@@ -177,12 +177,33 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
 
     # Account for single file processing
     else:
-        batch_prompt = """You are a book author known for your detailed motion descriptions and simple vocabulary. You receive an instruction and a sentence. 
-        Your task is to generate a detailed description of the motion in the sentence. The description should focus solely on the motion itself and avoid mentioning body parts. Your answer is one, max two sentences. It must be below 70tokens/~60 words.
-        """
-        example_prompt = example_prompt.get('single')
-        ex_user = json.dumps(example_prompt.get('user'))
-        ex_assistant = json.dumps(example_prompt.get('assistant'))
+        if use_cross_sample_information:
+            batch_prompt = """You are a human annotator for a text motion dataset. Your task is it to understand other annotator's motion description texts and create a much more detailed version. You receive an instruction and several sentences (below annotated as "motion1", "motion2", ...), all describing the exact same motion. 
+            You execute your task by generating a detailed version of the motion in each sentence. You can use information about the motion from across the different sentences. Please reuse the original wording and vocabulary. Your version should focus solely on the motion itself and avoid mentioning body parts other than legs, arms, feet, torso, hip and neck. It must be below 70 tokens/~60 words.
+            Format of input JSON:
+            {
+                "filename": {
+                    "motion1": "brief description",
+                    "motion2": "brief description",
+                    "motion3": "brief description"
+                }
+            }
+
+            Required output format:
+            Your output must also be in JSON format. Each motion description must be elaborate, maintaining the order of the motions as presented in the input. 
+            Do not skip any motions or include descriptions of muscle details. 
+            Each motion should be described in several sentences that elaborate on the brief description, without changing the nature of the motion described.
+            """
+            example_prompt = example_prompt.get('single')
+            ex_user = json.dumps(example_prompt.get('user'))
+            ex_assistant = json.dumps(example_prompt.get('assistant'))
+        else:
+            batch_prompt = """You are an average human known for your detailed motion descriptions and simple vocabulary. You receive an instruction and a sentence. 
+            Your task is to generate a detailed version of the motion in the sentence. Your version should focus solely on the motion itself and avoid mentioning body parts. Your answer is one, max two sentences. It must be below 70 tokens/~60 words.
+            """
+            example_prompt = example_prompt.get('single')
+            ex_user = json.dumps(example_prompt.get('user'))
+            ex_assistant = json.dumps(example_prompt.get('assistant'))
 
     new_system_prompt = batch_prompt + system_prompt
 
@@ -202,8 +223,11 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
         )
     
     refined_text = new_prompt.choices[0].message.content
+    print(data)
+    print(refined_text)
+    print("")
     
-    if BATCH_PROCESSING:
+    if BATCH_PROCESSING or use_cross_sample_information:
         # Cut everything before the first '{' and after the last '}'
         refined_text = refined_text[refined_text.find('{'):refined_text.rfind('}')+1]
         
@@ -222,7 +246,8 @@ def refine_text(data_folder:str,
                 client=OpenAI(), 
                 refine_specific_samples_txt_path=None,
                 stop_after_n_batches=None,
-                continue_previous=None):
+                continue_previous=None,
+                use_cross_sample_information=False):
     """Refines text in datafolder using given model and system prompt"""
 
     if continue_previous is not None:
@@ -258,7 +283,7 @@ def refine_text(data_folder:str,
             batch = files[i*batch_size:(i+1)*batch_size]
 
             try:
-                input, annotations = process_data(batch) # BATCH_PROCESSING is False
+                input, annotations = process_data(batch)
                 data = get_text_refinement(data=input, system_prompt=system_prompt, example_prompt=example_prompt, model=model, client=client, BATCH_PROCESSING=BATCH_PROCESSING)
                 export_data(data=data, annotations_dict=annotations, output_folder=output_folder)
 
@@ -272,6 +297,19 @@ def refine_text(data_folder:str,
             progress.update(1)
         progress.close()
 
+    elif use_cross_sample_information:
+        num_files = len(files) if stop_after_n_batches is None else min(stop_after_n_batches, len(files))
+        files = files[:num_files]
+
+        for file in tqdm(files, desc=f"Processing files"):
+
+            # try:
+            input, annotations = process_data([file])
+            data = get_text_refinement(data=input, system_prompt=system_prompt, example_prompt=example_prompt, model=model, client=client, BATCH_PROCESSING=BATCH_PROCESSING, use_cross_sample_information=True)
+            export_data(data=data, annotations_dict=annotations, output_folder=output_folder)
+
+            # except Exception as e:
+            #         print(f"An error occurred while processing file {file}: {e}")
     # Process files one by one
     else:
         num_files = len(files) if stop_after_n_batches is None else min(stop_after_n_batches, len(files))
@@ -280,7 +318,7 @@ def refine_text(data_folder:str,
         for file in tqdm(files, desc=f"Processing files"):
 
             try:
-                input, annotations = process_data([file]) # BATCH_PROCESSING is True
+                input, annotations = process_data([file])
 
                 # Convert input and annotions to dict
                 input = json.loads(input)
@@ -304,7 +342,7 @@ def main():
                         help="Specifies the target folder name where generated texts are saved to")
     parser.add_argument("--system_prompt", type=str, help="Name of JSON file containing system prompt",
                         default='extra_sentence.json')
-    parser.add_argument("--batch_size", type=int, default=1, help="Batch size as in number of .txt files being forwarded to the LLM at the same time")
+    parser.add_argument("--batch_size", type=int, default=1, help="If larger than 1, the model will process multiple files at once.")
     parser.add_argument("--early_stop", type=int, default=None, help="Stop after n refined samples for testing purposes")
     parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
     parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine all samples. Default: refine test samples only")
@@ -334,7 +372,6 @@ def main():
                 base_url = base_url,
                 api_key=api_key
             )
-            print("Here")
 
     print(f"Using {DEVICE} device")
 
@@ -396,7 +433,8 @@ def main():
             model=model,
             refine_specific_samples_txt_path=refine_specific_samples_txt_path,
             stop_after_n_batches=args.early_stop,
-            continue_previous=args.continue_previous
+            continue_previous=args.continue_previous,
+            use_cross_sample_information=args.use_cross_sample_information
         )
 
 

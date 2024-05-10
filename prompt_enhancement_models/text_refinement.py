@@ -94,11 +94,12 @@ def export_data(data:json, annotations_dict, output_folder:str):
                 altered_file.write(f"{content}#{motion_tag}#{annotation}\n")
 
 
-def process_data(filenames:list):
+def process_data(filenames:list, observation_instead_of_motion=False):
     """Process files into JSON format and extract annotations.
 
     Args:
         filenames (List[str]): List of filenames to be processed.
+        observation_instead_of_motion (bool): if True, the function will put out a dictionary with key "observationX" instead of "motionX". Default is False.
 
     Returns:
         Tuple[str, Dict[str, Dict[str]]]: A tuple containing the JSON string of motions and a dictionary of annotations.
@@ -126,7 +127,10 @@ def process_data(filenames:list):
                 content, _, a1, a2 = line.strip().rsplit("#", 3)
 
                 # Append content and annotations to respective lists
-                lines_dict[f"motion{i+1}"] = content
+                if observation_instead_of_motion:
+                    lines_dict[f"observation{i+1}"] = content
+                else:
+                    lines_dict[f"motion{i+1}"] = content
                 annotations_dict[filename].append(f"{a1}#{a2}")
 
             input_dict[filename] = lines_dict
@@ -178,21 +182,20 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
     # Account for single file processing
     else:
         if use_cross_sample_information:
-            batch_prompt = """You are a human annotator for a text motion dataset. Your task is it to understand other annotator's motion description texts and create a much more detailed version. You receive an instruction and several sentences (below annotated as "motion1", "motion2", ...), all describing the exact same motion. 
-            You execute your task by generating a detailed version of the motion in each sentence. You can use information about the motion from across the different sentences. Please reuse the original wording and vocabulary. Your version should focus solely on the motion itself and avoid mentioning body parts other than legs, arms, feet, torso, hip and neck. It must be below 70 tokens/~60 words.
-            Format of input JSON:
+            batch_prompt = """You are a regular human known for your detailed motion descriptions and simple vocabulary. In the following, you will receive a task and several observations all describing the same human motion. Your task is it to reuse some of the information, depending on the task you receive, across all observations to refine the observation. Do not mention muscles.
+            For each observation, generate a detailed version of the description individually by describing the full motion from start to finish each time.
+            
+            Format of input JSON that you will receive:
             {
                 "filename": {
-                    "motion1": "brief description",
-                    "motion2": "brief description",
-                    "motion3": "brief description"
+                    "observation1": description of the motion",
+                    "observation2": description of the motion",
+                    "observation3": description of the motion"
                 }
             }
 
             Required output format:
-            Your output must also be in JSON format. Each motion description must be elaborate, maintaining the order of the motions as presented in the input. 
-            Do not skip any motions or include descriptions of muscle details. 
-            Each motion should be described in several sentences that elaborate on the brief description, without changing the nature of the motion described.
+            Your output must also be in JSON format and be in exactly the same data structure as the input JSON format. You should replace each observation individually. Each observation must be in a single string and must maintain the order of the motions as presented in the input. Each observation must be below 70 tokens/~60 words.
             """
             example_prompt = example_prompt.get('single')
             ex_user = json.dumps(example_prompt.get('user'))
@@ -230,7 +233,6 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
     if BATCH_PROCESSING or use_cross_sample_information:
         # Cut everything before the first '{' and after the last '}'
         refined_text = refined_text[refined_text.find('{'):refined_text.rfind('}')+1]
-        
         return json.loads(refined_text)
     
     else:
@@ -303,13 +305,13 @@ def refine_text(data_folder:str,
 
         for file in tqdm(files, desc=f"Processing files"):
 
-            # try:
-            input, annotations = process_data([file])
-            data = get_text_refinement(data=input, system_prompt=system_prompt, example_prompt=example_prompt, model=model, client=client, BATCH_PROCESSING=BATCH_PROCESSING, use_cross_sample_information=True)
-            export_data(data=data, annotations_dict=annotations, output_folder=output_folder)
+            try:
+                input, annotations = process_data([file], observation_instead_of_motion=True)
+                data = get_text_refinement(data=input, system_prompt=system_prompt, example_prompt=example_prompt, model=model, client=client, BATCH_PROCESSING=BATCH_PROCESSING, use_cross_sample_information=True)
+                export_data(data=data, annotations_dict=annotations, output_folder=output_folder)
 
-            # except Exception as e:
-            #         print(f"An error occurred while processing file {file}: {e}")
+            except Exception as e:
+                    print(f"An error occurred while processing file {file}: {e}")
     # Process files one by one
     else:
         num_files = len(files) if stop_after_n_batches is None else min(stop_after_n_batches, len(files))

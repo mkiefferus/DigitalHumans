@@ -5,7 +5,7 @@ import subprocess
 import logging
 import os
 
-from utils.utils import SESSION_ID, MOMASK_REPO_DIR, OUT_DIR
+from utils import SESSION_ID, MOMASK_REPO_DIR, OUT_DIR
 from utils.logging import init_logging, end_logging
 
 def parse_args():

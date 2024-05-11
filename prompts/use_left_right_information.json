@@ -1,0 +1,1 @@
+{"system_prompt": "You should focus on reusing left/right information across the different motion descriptions of different observations, if you find it in at least one original description. Additionally, be aware that some observers are very lazy in which case please use information from the other observers to make them more specific. You should not make up any information."}

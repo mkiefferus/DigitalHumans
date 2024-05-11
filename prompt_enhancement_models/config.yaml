@@ -1,0 +1,6 @@
+batch_size: -1 # -1 for no batching
+early_stop: null # none for not early stopping
+base_url: 'http://localhost:11434/v1'
+api_key: 'ollama'
+model: llama3
+# model: llama3:8b-instruct-fp16

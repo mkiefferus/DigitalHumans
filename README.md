@@ -14,6 +14,8 @@ Furthermore, you will need to download the ```en_core_web_sm``` model:
 python -m spacy download en_core_web_sm
 ```
 
+Please create an OPENAI API Token and export it as a global variable to your system. ```OPENAI_API_KEY = ".."```
+
 ### Integrating External Repositories
 #### MoMask
 Clone the [MoMask Repository](https://github.com/EricGuo5513/momask-codes) into the folder ```DigitalHumans/external_repos``` and follow their instruction to download datasets and models.

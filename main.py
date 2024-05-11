@@ -108,5 +108,10 @@ if __name__ == '__main__':
         
         logging.info("Finished with the following args:")
         logging.info(args)
-
+    # train
+    else:
+        cmd = f'cd external_repos/momask-codes; python train_t2m_transformer.py --name t2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns --gpu_id 0 --dataset_name t2m --batch_size 64 --vq_name rvq_nq6_dc512_nc512_noshare_qdp0.2 --max_epoch=200'
+        os.system(cmd)
+        logging.info("Finished with the following args:")
+        logging.info(args)
     end_logging(logfile)

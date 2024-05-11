@@ -1,6 +1,5 @@
-system_prompt: paper_p1.json
 batch_size: -1 # -1 for no batching
-early_stop: null # -1 for not early stopping
+early_stop: null # none for not early stopping
 base_url: 'http://localhost:11434/v1'
 api_key: 'ollama'
 model: llama3

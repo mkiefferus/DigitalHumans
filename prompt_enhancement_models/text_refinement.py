@@ -175,9 +175,10 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
         """
 
         # Load example prompts for assistant and user
-        example_prompt = example_prompt.get('batch')
-        ex_user = json.dumps(example_prompt.get('user'), indent=4)
-        ex_assistant = json.dumps(example_prompt.get('assistant'), indent=4)
+        if example_prompt:
+            example_prompt = example_prompt.get('batch')
+            ex_user = json.dumps(example_prompt.get('user'), indent=4)
+            ex_assistant = json.dumps(example_prompt.get('assistant'), indent=4)
 
     # Account for single file processing
     else:
@@ -197,33 +198,43 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
             Required output format:
             Your output must also be in JSON format and be in exactly the same data structure as the input JSON format. You should replace each observation individually. Each observation must be in a single string and must maintain the order of the motions as presented in the input. Each observation must be below 70 tokens/~60 words.
             """
-            example_prompt = example_prompt.get('single')
-            ex_user = json.dumps(example_prompt.get('user'))
-            ex_assistant = json.dumps(example_prompt.get('assistant'))
+            
         else:
             batch_prompt = """You are an average human known for your detailed motion descriptions and simple vocabulary. You receive an instruction and a sentence. 
             Your task is to generate a detailed version of the motion in the sentence. Your version should focus solely on the motion itself and avoid mentioning body parts. Your answer is one, max two sentences. It must be below 70 tokens/~60 words.
             """
-            example_prompt = example_prompt.get('single')
-            ex_user = json.dumps(example_prompt.get('user'))
-            ex_assistant = json.dumps(example_prompt.get('assistant'))
+            
+        if example_prompt:
+                example_prompt = example_prompt.get('single')
+                ex_user = json.dumps(example_prompt.get('user'))
+                ex_assistant = json.dumps(example_prompt.get('assistant'))
 
     new_system_prompt = batch_prompt + system_prompt
 
-
-    new_prompt = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", 
-             "content": new_system_prompt},
-            {"role": "user", 
-             "content": ex_user},
-            {"role": "assistant", 
-             "content": ex_assistant},
-            {"role": "user",
-             "content": data}
-            ]
-        )
+    if example_prompt:
+        new_prompt = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", 
+                "content": new_system_prompt},
+                {"role": "user", 
+                "content": ex_user},
+                {"role": "assistant", 
+                "content": ex_assistant},
+                {"role": "user",
+                "content": data}
+                ]
+            )
+    else:
+        new_prompt = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", 
+                "content": new_system_prompt},
+                {"role": "user",
+                "content": data}
+                ]
+            )
     
     refined_text = new_prompt.choices[0].message.content
     print(data)
@@ -242,7 +253,7 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
 def refine_text(data_folder:str, 
                 output_folder:str, 
                 system_prompt:str, 
-                example_prompt,
+                example_prompt=None,
                 batch_size:int=3, 
                 model:str="gpt-3.5-turbo", 
                 client=OpenAI(), 
@@ -349,6 +360,7 @@ def main():
     parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
     parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine all samples. Default: refine test samples only")
     parser.add_argument("--use_cross_sample_information", type=bool, default=False, help="Use information from multiple samples of the same text file to output enhanced samples with more information. Makes batch_size arg invalid")
+    parser.add_argument("--use_example", type=bool, default=False, help="Whether to use example prompts for the model assistant and user (specified as ex_<system_prompt>.json) in folder prompts_examples")
     parser.add_argument("--from_config", type=bool, default=False, help="Load configuration from config.yaml")
     args = parser.parse_args()
 
@@ -393,8 +405,10 @@ def main():
         os.makedirs(target_folder)
         
     # Load example prompt for model assistant and user
-    with open(os.path.join(ROOT_DIR, "prompts_examples" ,f"ex_{args.system_prompt}"), 'r') as file:
-        example_prompt = json.load(file)
+    if args.use_example:
+        with open(os.path.join(ROOT_DIR, "prompts_examples" ,f"ex_{args.system_prompt}"), 'r') as file:
+            example_prompt = json.load(file)
+    else: example_prompt = None
 
     # Load system prompt
     system_prompt_path = os.path.join(ROOT_DIR, "prompts", args.system_prompt)

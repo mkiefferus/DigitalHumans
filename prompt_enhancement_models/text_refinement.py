@@ -184,7 +184,7 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
     else:
         if use_cross_sample_information:
             batch_prompt = """You are a regular human known for your detailed motion descriptions and simple vocabulary. In the following, you will receive a task and several observations all describing the same human motion. Your task is it to reuse some of the information, depending on the task you receive, across all observations to refine the observation. Do not mention muscles.
-            For each observation, generate a detailed version of the description individually by describing the full motion from start to finish each time.
+            For each observation, generate a detailed version of the description individually by describing the full motion from start to finish each time. Refine each movement by mentioning each of the following body parts (even if they don't move): arms, legs, torso, neck, buttocks, and waist. Make sure that the movement descriptions do not contradict themsevels across observations.
             
             Format of input JSON that you will receive:
             {

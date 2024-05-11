@@ -237,9 +237,9 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
             )
     
     refined_text = new_prompt.choices[0].message.content
-    print(data)
-    print(refined_text)
-    print("")
+    # print(data)
+    # print(refined_text)
+    # print("")
     
     if BATCH_PROCESSING or use_cross_sample_information:
         # Cut everything before the first '{' and after the last '}'

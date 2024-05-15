@@ -10,6 +10,8 @@ from datetime import datetime
 import numpy as np
 import yaml
 
+from quality_control import check_dataset_quality
+
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # the project root directory
 # CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # the project root directory
 LOG_DIR = os.path.join(ROOT_DIR, "out", "logs")
@@ -258,7 +260,9 @@ def refine_text(data_folder:str,
                 refine_specific_samples_txt_path=None,
                 stop_after_n_batches=None,
                 continue_previous=None,
-                use_cross_sample_information=False):
+                use_cross_sample_information=False,
+                replace=False,
+                delete=False):
     """Refines text in datafolder using given model and system prompt"""
 
     if continue_previous is not None:
@@ -346,6 +350,8 @@ def refine_text(data_folder:str,
 
     print("Text refinement complete.")
 
+    # Check dataset quality
+    check_dataset_quality(dataset_path=output_folder, replace=replace, delete=delete)
 
 def main():
     parser = argparse.ArgumentParser(description="Text Enhancement Pipeline")
@@ -360,6 +366,8 @@ def main():
     parser.add_argument("--use_cross_sample_information", type=bool, default=False, help="Use information from multiple samples of the same text file to output enhanced samples with more information. Makes batch_size arg invalid")
     parser.add_argument("--use_example", type=bool, default=False, help="Whether to use example prompts for the model assistant and user (specified as ex_<system_prompt>.json) in folder prompts_examples")
     parser.add_argument("--from_config", type=bool, default=False, help="Load configuration from config.yaml")
+    parser.add_argument("-r", "--replace", action="store_true", help="Replace '#No annotation' with '#0.0#0.0'.")
+    parser.add_argument("-d", "--delete", action="store_true", help="Delete faulty files.")
     args = parser.parse_args()
 
     client = OpenAI()
@@ -387,8 +395,12 @@ def main():
 
     print(f"Using {DEVICE} device")
 
-    model = getattr(args, 'model', 'gpt-3.5-turbo')
+    # Warn if no processing flag is given
+    if not args.replace and not args.delete:
+        raise Warning("No processing flag given. Use -r to replace or -d to delete possible faulty files.")
 
+    # Set modelname to default if not specified
+    model = getattr(args, 'model', 'gpt-3.5-turbo')
 
     # Ensure folder structure exists
     if args.folder_name:
@@ -448,7 +460,9 @@ def main():
             refine_specific_samples_txt_path=refine_specific_samples_txt_path,
             stop_after_n_batches=args.early_stop,
             continue_previous=args.continue_previous,
-            use_cross_sample_information=args.use_cross_sample_information
+            use_cross_sample_information=args.use_cross_sample_information,
+            replace=args.replace,
+            delete=args.delete
         )
 
 

@@ -24,7 +24,7 @@ HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/Human
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])
 
-def _continue_folder(continue_folder_path:str, data_folder_path:str, refine_specific_samples_txt_path:str) -> list[str]:
+def _continue_folder(continue_folder_path:str, data_folder_path:str, refine_specific_samples_txt_path:str):
     """(Helperfunction) Continue refining text at checkpoint"""
 
     # Check if path exists
@@ -154,6 +154,8 @@ def process_data(filenames:list, observation_instead_of_motion=False):
 def get_text_refinement(data, system_prompt:str, example_prompt, model:str, client, BATCH_PROCESSING:bool=False, use_cross_sample_information:bool=False) -> json:
     """Use OpenAI API for text refinement."""
 
+    messages = []
+    
     if BATCH_PROCESSING:
         batch_prompt = """You are an average human known for your detailed motion descriptions and simple vocabulary. Your task is to generate descriptions for a given list of motions represented in a JSON format. 
         Each motion is associated with a specific filename and is identified uniquely. The descriptions should focus solely on the motion itself and avoid mentioning body parts unless integral to the motion.
@@ -183,6 +185,9 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
             example_prompt = example_prompt.get('batch')
             ex_user = json.dumps(example_prompt.get('user'), indent=4)
             ex_assistant = json.dumps(example_prompt.get('assistant'), indent=4)
+            # TODO: potentially also support multiple examples for batch prompts
+            messages.append({"role": "user", "content": ex_user})
+            messages.append({"role": "assistant", "content": ex_assistant})
 
     # Account for single file processing
     else:
@@ -204,41 +209,29 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
             """
             
         else:
-            batch_prompt = """You are an average human known for your detailed motion descriptions and simple vocabulary. You receive an instruction and a sentence. 
-            Your task is to generate a detailed version of the motion in the sentence. Your version should focus solely on the motion itself and avoid mentioning body parts. Your answer is one, max two sentences. It must be below 70 tokens/~60 words.
+            batch_prompt = """You are an average human known for your good motion descriptions and simple vocabulary.
+            Keep your answers short in one, max two sentences. It must be below 70 tokens/~60 words.
             """
             
         if example_prompt:
-                example_prompt = example_prompt.get('single')
-                ex_user = json.dumps(example_prompt.get('user'))
-                ex_assistant = json.dumps(example_prompt.get('assistant'))
-
+            # Insert list of examples for user and assistant
+            example_prompts = example_prompt.get('single')
+            for example in example_prompts:
+                ex_user = example.get('user')
+                ex_assistant = example.get('assistent')
+                messages.append({"role": "user", "content": ex_user})
+                messages.append({"role": "assistant", "content": ex_assistant})
+                
     new_system_prompt = batch_prompt + system_prompt
+    # Prepend system prompt
+    messages.insert(0, {"role": "system", "content": new_system_prompt})
+    # Append user prompt at end
+    messages.append({"role": "user", "content": data})
 
-    if example_prompt:
-        new_prompt = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", 
-                "content": new_system_prompt},
-                {"role": "user", 
-                "content": ex_user},
-                {"role": "assistant", 
-                "content": ex_assistant},
-                {"role": "user",
-                "content": data}
-                ]
-            )
-    else:
-        new_prompt = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", 
-                "content": new_system_prompt},
-                {"role": "user",
-                "content": data}
-                ]
-            )
+    new_prompt = client.chat.completions.create(
+        model=model,
+        messages=messages
+    )
     
     refined_text = new_prompt.choices[0].message.content
     # print(data)

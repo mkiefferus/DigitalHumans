@@ -1,0 +1,28 @@
+{
+    "single": [
+        {
+            "user": "a man does the floss dance.",
+            "assistent": "A man moves his extended arms in parallel and always sideways in an alternating motion so that one arm is always behind and one in front of his body. The hands are always at hip level and his hips move in sync with his arms."
+        },
+        {
+            "user": "a person does the running man dance.",
+            "assistent": "A person imitates slowly running in place with a very rhythmic motion. The feet always slide along the floor and the person bumps up and down in sync with the feet."
+        },
+        {
+            "user": "a person walks forward slowly.",
+            "assistent": "a person walks forward slowly."
+        },
+        {
+            "user": "a person does apple jacks.",
+            "assistent": "A person steps on the spot while twisting their feet so that they both rotate outwards then inwards. They repeat this motion several times."
+        },
+        {
+            "user": "a person does a yoga child's pose.",
+            "assistent": "A person kneels on the floor, sits back on their heels, and afterwards stretches their arms forward on the ground and put their belly on the floor, until the forehead rests on the mat."
+        },
+        {
+            "user": "a person walks in a counterclockwise circle and jumps.",
+            "assistent": "a person walks in a counterclockwise circle and jumps."
+        }
+    ]
+}

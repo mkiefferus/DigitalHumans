@@ -355,7 +355,10 @@ class Text2MotionDataset(data.Dataset):
         assert length <= self.max_motion_length
         self.pointer = np.searchsorted(self.length_arr, length)
         print("Pointer Pointing at %d" % self.pointer)
+
+
 """
+# original, but count amount of cropped samples
 from os.path import join as pjoin
 import torch
 from torch.utils import data
@@ -706,5 +709,4 @@ class Text2MotionDataset(data.Dataset):
         assert length <= self.max_motion_length
         self.pointer = np.searchsorted(self.length_arr, length)
         print("Pointer Pointing at %d" % self.pointer)
-
 """

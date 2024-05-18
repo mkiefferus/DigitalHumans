@@ -64,7 +64,7 @@ def get_opt(opt_path, device, **kwargs):
         opt.max_motion_length = 196
         opt.max_motion_frame = 196
         opt.max_motion_token = 55
-        opt.max_text_len = 50 # TODO: revert
+        opt.max_text_len = 77 # TODO: revert
     elif opt.dataset_name == 'kit':
         opt.data_root = './dataset/KIT-ML/'
         opt.motion_dir = pjoin(opt.data_root, 'new_joint_vecs')

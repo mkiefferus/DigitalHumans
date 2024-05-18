@@ -12,8 +12,12 @@ def has_good_quality(file_path) -> bool:
     pattern = r".*#((\d+\.\d+)|nan)#((\d+\.\d+)|nan)$"
 
     # Read file content
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+    except:
+        print(f"Failed to read file {file_path}.")
+        return False
 
     # Replace "#No annotation" with "#0.0#0.0"
     modified_lines = [line.replace("#No annotation", "#0.0#0.0") for line in lines]

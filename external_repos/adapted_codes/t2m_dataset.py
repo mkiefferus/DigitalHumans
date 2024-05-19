@@ -456,6 +456,7 @@ class Text2MotionDatasetEval(data.Dataset):
         self.max_length = 20
         self.pointer = 0
         self.max_motion_length = opt.max_motion_length
+        self.cropped_samples = 0
         min_motion_len = 40 if self.opt.dataset_name =='t2m' else 24
 
         data_dict = {}

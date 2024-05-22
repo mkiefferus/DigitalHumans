@@ -85,6 +85,7 @@ def replace_failed_files(dataset_path, failed_files):
     else:
         print("Failed to clean dataset - no files replaced.")
 
+
 def save_faulty_names(dataset_path, failed_files):
     """Save names of faulty files to a text file"""
     faulty_names_out_path = os.path.join(dataset_path, "failed_files.txt")

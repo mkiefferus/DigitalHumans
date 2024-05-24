@@ -193,11 +193,11 @@ def check_dataset_quality(dataset_path, replace:bool, delete:bool, test:bool):
 
     failed_files = []
     
-    # for filename in os.listdir(dataset_path):
-    #     if filename.endswith(".txt") and not filename.startswith("failed_files"):
-    #         file_path = os.path.join(dataset_path, filename)
-    #         if not has_good_quality(file_path):
-    #             failed_files.append(filename.split(".")[0])
+    for filename in os.listdir(dataset_path):
+        if filename.endswith(".txt") and not filename.startswith("failed_files"):
+            file_path = os.path.join(dataset_path, filename)
+            if not has_good_quality(file_path):
+                failed_files.append(filename.split(".")[0])
 
     # Ensure that replace has higher priority
     if replace:

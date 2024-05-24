@@ -2,6 +2,8 @@ import os
 import re
 import shutil
 import argparse
+import codecs as cs
+from tqdm import tqdm
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # the project root directory
 HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/HumanML3D")
@@ -85,6 +87,24 @@ def replace_failed_files(dataset_path, failed_files):
     else:
         print("Failed to clean dataset - no files replaced.")
 
+def replace_not_generated_test_files(adjusted_dataset_path):
+    test_file_path = os.path.join(HUMAN_ML_DIR, "test.txt")
+    original_dataset_path = os.path.join(HUMAN_ML_DIR, "texts")
+    id_list = []
+    with open(test_file_path, "r") as f:
+        for idx, line in enumerate(f.readlines()):
+                id_list.append(line.strip())
+    counter = 0
+    for file in tqdm(id_list):
+        adjusted_does_not_exist = os.path.exists(path = os.path.join(adjusted_dataset_path, file + ".txt"))
+        original_exists = os.path.exists(os.path.join(original_dataset_path, file + ".txt"))
+        if not adjusted_does_not_exist and original_exists:
+            original_file_path = os.path.join(original_dataset_path, file + ".txt")
+            shutil.copy(original_file_path, adjusted_dataset_path)
+            counter +=1
+    print(f"There were {counter} files missing for the test dataset, that were replaced by the original text files.")
+    return
+
 def save_faulty_names(dataset_path, failed_files):
     """Save names of faulty files to a text file"""
     faulty_names_out_path = os.path.join(dataset_path, "failed_files.txt")
@@ -95,7 +115,7 @@ def save_faulty_names(dataset_path, failed_files):
     return faulty_names_out_path
 
 
-def check_dataset_quality(dataset_path, replace:bool, delete:bool):
+def check_dataset_quality(dataset_path, replace:bool, delete:bool, test:bool):
 
     print(f"Checking dataset quality...")
 
@@ -120,14 +140,17 @@ def check_dataset_quality(dataset_path, replace:bool, delete:bool):
             # Save name of faulty files if no flagg given
             faulty_names_out_path = save_faulty_names(dataset_path, failed_files)
             print(f"No processing flagg given. Dataset contains faulty files. List of faulty files saved at {faulty_names_out_path}.")
+    if test:
+        replace_not_generated_test_files(adjusted_dataset_path=dataset_path)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check dataset quality and handle faulty files.")
-    parser.add_argument("--data", type=str, help="Path to the dataset folder.")
+    parser.add_argument("--data", type=str, help="Path to the generated dataset folder.")
     parser.add_argument("-r", action="store_true", help="Replace '#No annotation' with '#0.0#0.0'.")
     parser.add_argument("-d", action="store_true", help="Delete faulty files.")
+    parser.add_argument("-t", action= "store_true", help="For the test set, copy original file if it doesn't exist.")
 
     args = parser.parse_args()  
 
-    check_dataset_quality(args.data, args.r, args.d)
+    check_dataset_quality(args.data, args.r, args.d, args.t)

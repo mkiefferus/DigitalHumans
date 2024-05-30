@@ -209,7 +209,7 @@ def check_dataset_quality(dataset_path, replace:bool, delete:bool, test:bool):
         print(f"Dataset quality check complete. {len(failed_files)} faulty files found.")
         
         if len(failed_files) != 0:
-            # Save name of faulty files if no flagg given
+            # Save name of faulty files if no flag given
             faulty_names_out_path = save_faulty_names(dataset_path, failed_files)
             print(f"No processing flag given. Dataset contains faulty files. List of faulty files saved at {faulty_names_out_path}.")
     if test:
@@ -220,10 +220,10 @@ def check_dataset_quality(dataset_path, replace:bool, delete:bool, test:bool):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check dataset quality and handle faulty files.")
-    parser.add_argument("--data", type=str, help="Path to the generated dataset folder.")
-    parser.add_argument("-r", action="store_true", help="Replace '#No annotation' with '#0.0#0.0'.")
+    parser.add_argument("--data", type=str, help="Path to the generated dataset folder.", required=True)
+    parser.add_argument("-r", action="store_true", help="Replace faulty files with original files.")
     parser.add_argument("-d", action="store_true", help="Delete faulty files.")
-    parser.add_argument("-t", action= "store_true", help="For the test set, copy original file if it doesn't exist and compare/adjust the flags of the first entry.")
+    parser.add_argument("-t", action="store_true", help="For the test set, copy original file if it doesn't exist and compare/adjust the flags of the first entry.")
 
     args = parser.parse_args()  
 

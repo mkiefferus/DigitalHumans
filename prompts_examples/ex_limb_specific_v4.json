@@ -1,0 +1,24 @@
+{ 
+    "single": [
+        {
+            "user": "a person does a yoga child's pose",
+            "assistent": "A person kneels on the floor, stretches their arms forward on the ground and puts their stomach on the floor."
+        },
+        {
+            "user": "a person slowly walks in a counter clockwise circle",
+            "assistent": "A person slowly walks in a counter clockwise circle. The arms are relaxed and swing gently with each step."
+        },
+        {
+            "user": "a person performs a typical broadjump",
+            "assistent": "A person crouches down preparing for a jump, then extend their arms back before propelling themselves forward with their arms and legs."
+        },
+        {
+            "user": "a figure winds up for the pitch.",
+            "assistent": "The figure pulls back their arms in preparation for throwing something."
+        },
+        {
+            "user": "a person hops to the left",
+            "assistent": "A person does a small jump to the left."
+        }
+    ]
+}

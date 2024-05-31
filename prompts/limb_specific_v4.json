@@ -1,0 +1,1 @@
+{"system_prompt": "Translate the following motion by describing the motion of the most relevant bodyparts. The available body parts include ['arms', 'legs', 'torso', 'neck','buttocks', 'waist']. 1-2 sentences for each motion are ideal. You don't need to translate very common motions such as walking, sitting or jumping, but can add relevant detail if appropriate."}

@@ -351,7 +351,7 @@ def refine_text(data_folder:str,
     print("Text refinement complete.")
 
     # Check dataset quality
-    check_dataset_quality(dataset_path=output_folder, replace=replace, delete=delete)
+    check_dataset_quality(dataset_path=output_folder, replace=replace, delete=delete, test=False) # TODO: adjust test flag
 
 def main():
     parser = argparse.ArgumentParser(description="Text Enhancement Pipeline")
@@ -363,6 +363,7 @@ def main():
     parser.add_argument("--early_stop", type=int, default=None, help="Stop after n refined samples for testing purposes")
     parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
     parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine all samples. Default: refine test samples only")
+    parser.add_argument("--samples_text_file", type=str, default="test.txt", help="Text file specifying samples to refine. Default: test.txt")
     parser.add_argument("--use_cross_sample_information", type=bool, default=False, help="Use information from multiple samples of the same text file to output enhanced samples with more information. Makes batch_size arg invalid")
     parser.add_argument("--use_example", type=bool, default=False, help="Whether to use example prompts for the model assistant and user (specified as ex_<system_prompt>.json) in folder prompts_examples")
     parser.add_argument("--from_config", type=bool, default=False, help="Load configuration from config.yaml")
@@ -426,7 +427,7 @@ def main():
         system_prompt = json.load(file).get('system_prompt')
 
     if not args.refine_all_samples:
-        refine_specific_samples_txt_path = os.path.join(MOMASK_REPO_DIR, "dataset", "HumanML3D", "test.txt")
+        refine_specific_samples_txt_path = os.path.join(MOMASK_REPO_DIR, "dataset", "HumanML3D", args.samples_text_file)
     else:
         refine_specific_samples_txt_path = None
 

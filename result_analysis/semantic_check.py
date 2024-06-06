@@ -11,7 +11,6 @@ def semantic_check(file_path:str, client, model:str) -> bool:
     """Compare original prompt with refined prompt and check whether they are semantically similar enough."""
     # Print file name (without full path)
     _, file_name = os.path.split(file_path)
-    print(file_name)
 
     # Open refined file
     try:
@@ -81,13 +80,13 @@ def semantic_check(file_path:str, client, model:str) -> bool:
         # Check assistant answer
         answer = prompt.choices[0].message.content
 
-        # Print both lines and result
-        print(f"Original: {original_line}")
-        print(f"Refined: {refined_line}")
-        print(f"Assistant: {answer}")
-        print("\n")
-
         if "No" in answer:
+            print(file_name)
+            # Print both lines and result
+            print(f"Original: {original_line}")
+            print(f"Refined: {refined_line}")
+            print(f"Assistant: {answer}")
+            print("\n")
             return False
 
     return True
@@ -143,20 +142,21 @@ def check_dataset_semantics(dataset_path, replace:bool, delete:bool, client, mod
     print(f"Checking dataset quality...")
     failed_files = []
 
-    for filename in os.listdir(dataset_path):
+    for filename in tqdm(os.listdir(dataset_path)):
         if filename.endswith(".txt") and not filename.startswith("failed_files"):
             file_path = os.path.join(dataset_path, filename)
             if not semantic_check(file_path, client, model):
                 failed_files.append(filename.split(".")[0])
+
+    # Print fraction of faulty files
+    print(f"Dataset quality check complete. {len(failed_files)}/{len(os.listdir(dataset_path))} files faulty.")
 
     # Ensure that replace has higher priority
     if replace:
         replace_failed_files(dataset_path, failed_files)
     elif delete:
         delete_failed_files(dataset_path, failed_files)
-    else:
-        print(f"Dataset quality check complete. {len(failed_files)} faulty files found.")
-        
+    else:       
         if len(failed_files) != 0:
             # Save name of faulty files if no flag given
             faulty_names_out_path = save_faulty_names(dataset_path, failed_files)

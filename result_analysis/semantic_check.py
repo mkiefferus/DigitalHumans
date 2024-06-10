@@ -7,7 +7,7 @@ from openai import OpenAI
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # the project root directory
 HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/HumanML3D")
 
-def semantic_check(file_path:str, client, model:str, replace:bool):
+def semantic_check(file_path:str, client, model:str, replace:bool, verbose:bool):
     """Compare original prompts in file with refined prompts and check whether they are semantically similar enough.
        Return (whether file contains errors, number of failed prompts) in file.
     """
@@ -77,12 +77,13 @@ def semantic_check(file_path:str, client, model:str, replace:bool):
         answer = prompt.choices[0].message.content
 
         if "No" in answer:
-            print(file_name)
-            # Print both lines and result
-            print(f"Original: {original_line}")
-            print(f"Refined: {refined_line}")
-            print(f"Assistant: {answer}")
-            print("\n")
+            if (verbose):
+                print(file_name)
+                # Print both lines and result
+                print(f"Original: {original_line}")
+                print(f"Refined: {refined_line}")
+                print(f"Assistant: {answer}")
+                print("\n")
 
             invalid_refinements += 1
             if (replace):
@@ -107,7 +108,7 @@ def save_faulty_names(dataset_path, failed_files):
     return faulty_names_out_path
 
 
-def check_dataset_semantics(dataset_path, replace:bool, client, model:str):
+def check_dataset_semantics(dataset_path, replace:bool, client, model:str, verbose:bool):
     print(f"Checking dataset quality...")
     failed_files = []
     prompt_count = 0
@@ -117,7 +118,7 @@ def check_dataset_semantics(dataset_path, replace:bool, client, model:str):
         if filename.endswith(".txt") and not filename.startswith("failed_files"):
             file_path = os.path.join(dataset_path, filename)
             try:
-                prompt_amount, invalid_refinement_amount = semantic_check(file_path, client, model, replace)
+                prompt_amount, invalid_refinement_amount = semantic_check(file_path, client, model, replace, verbose)
                 prompt_count += prompt_amount
                 invalid_refinement_count += invalid_refinement_amount
                 if (invalid_refinement_amount > 0):
@@ -139,6 +140,7 @@ if __name__ == "__main__":
     parser.add_argument("--data", type=str, help="Path to the generated dataset folder.", required=True)
     parser.add_argument("--model", type=str, help="LLM to use for checking quality, either llama3 or gpt-3.5-turbo", default="llama3")
     parser.add_argument("-r", action="store_true", help="Replace faulty prompt refinements with original texts.")
+    parser.add_argument("-v", action="store_true", help="Verbose mode.")
 
     args = parser.parse_args()  
 
@@ -153,4 +155,4 @@ if __name__ == "__main__":
         print("Using GPT-3.5 Turbo model for checking similarity")
 
 
-    check_dataset_semantics(args.data, args.r, client, args.model)
+    check_dataset_semantics(args.data, args.r, client, args.model, args.v)

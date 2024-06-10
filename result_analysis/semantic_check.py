@@ -7,27 +7,21 @@ from openai import OpenAI
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # the project root directory
 HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/HumanML3D")
 
-def semantic_check(file_path:str, client, model:str) -> bool:
-    """Compare original prompt with refined prompt and check whether they are semantically similar enough."""
+def semantic_check(file_path:str, client, model:str, replace:bool):
+    """Compare original prompts in file with refined prompts and check whether they are semantically similar enough.
+       Return (whether file contains errors, number of failed prompts) in file.
+    """
     # Print file name (without full path)
     _, file_name = os.path.split(file_path)
 
     # Open refined file
-    try:
-        with open(file_path, 'r') as file:
-            lines_refined = file.readlines()
-    except:
-        print(f"Failed to read refined file {file_path}.")
-        return False
+    with open(file_path, 'r') as file:
+        lines_refined = file.readlines()
     
     # Open corresponding original file
     original_file_path = os.path.join(HUMAN_ML_DIR, "texts", file_name)
-    try:
-        with open(original_file_path, 'r') as file:
-            lines_original = file.readlines()
-    except:
-        print(f"Failed to read original file {file_name}, skipping...")
-        return True
+    with open(original_file_path, 'r') as file:
+        lines_original = file.readlines()
 
     # Check if the number of lines is the same
     if len(lines_refined) != len(lines_original):
@@ -58,6 +52,8 @@ def semantic_check(file_path:str, client, model:str) -> bool:
         )
     ]
 
+    invalid_refinements = 0
+
     for i in range(len(lines_refined)):
         refined_line = lines_refined[i].split("#")[0].strip()
         original_line = lines_original[i].split("#")[0].strip()
@@ -87,44 +83,18 @@ def semantic_check(file_path:str, client, model:str) -> bool:
             print(f"Refined: {refined_line}")
             print(f"Assistant: {answer}")
             print("\n")
-            return False
 
-    return True
+            invalid_refinements += 1
+            if (replace):
+                # Replace refined line with original line
+                lines_refined[i] = lines_original[i]
+    
+    # Save refined file with replaced lines
+    if (replace):
+        with open(file_path, 'w') as file:
+            file.writelines(lines_refined)
 
-
-def delete_failed_files(dataset_path, failed_files):
-    """Delete faulty files from dataset"""
-    for filename in failed_files:
-        file_path = os.path.join(dataset_path, filename + ".txt")
-        try:
-            os.remove(file_path)
-        except FileNotFoundError:
-            print(f"File {filename} not found for deletion.")
-
-    deleted_files_list = save_faulty_names(dataset_path, failed_files)
-    print(f"Dataset cleaned successfully (deleted {len(failed_files)}). List of deleted files saved at {deleted_files_list}.")
-
-
-def replace_failed_files(dataset_path, failed_files):
-    """Replace faulty files with originals from the org_data_folder"""
-
-    replaced_counter = 0
-    for filename in failed_files:
-        original_file_path = os.path.join(HUMAN_ML_DIR, "texts", filename + ".txt")
-        destination_file_path = os.path.join(dataset_path, filename + ".txt")
-
-        try:
-            shutil.copy(original_file_path, destination_file_path)
-        except FileNotFoundError:
-            print(f"Original file {original_file_path} not found for replacement.")
-
-
-    if replaced_counter < len(failed_files):
-        print(f"Attended to clean dataset - {replaced_counter}/{len(failed_files)} files replaced.")
-    elif replaced_counter == len(failed_files):
-        print(f"Dataset cleaned successfully.")
-    else:
-        print("Failed to clean dataset - no files replaced.")
+    return (len(lines_refined), invalid_refinements)
 
 
 def save_faulty_names(dataset_path, failed_files):
@@ -137,38 +107,38 @@ def save_faulty_names(dataset_path, failed_files):
     return faulty_names_out_path
 
 
-def check_dataset_semantics(dataset_path, replace:bool, delete:bool, client, model:str):
-
+def check_dataset_semantics(dataset_path, replace:bool, client, model:str):
     print(f"Checking dataset quality...")
     failed_files = []
+    prompt_count = 0
+    invalid_refinement_count = 0
 
     for filename in tqdm(os.listdir(dataset_path)):
         if filename.endswith(".txt") and not filename.startswith("failed_files"):
             file_path = os.path.join(dataset_path, filename)
-            if not semantic_check(file_path, client, model):
-                failed_files.append(filename.split(".")[0])
+            try:
+                prompt_amount, invalid_refinement_amount = semantic_check(file_path, client, model, replace)
+                prompt_count += prompt_amount
+                invalid_refinement_count += invalid_refinement_amount
+                if (invalid_refinement_amount > 0):
+                    failed_files.append(filename.split(".")[0])
+            except:
+                print(f"Failed to check file {filename}.")
 
     # Print fraction of faulty files
-    print(f"Dataset quality check complete. {len(failed_files)}/{len(os.listdir(dataset_path))} files faulty.")
+    print(f"Dataset quality check complete. {invalid_refinement_count}/{prompt_count} refined prompts invalid.")
 
-    # Ensure that replace has higher priority
-    if replace:
-        replace_failed_files(dataset_path, failed_files)
-    elif delete:
-        delete_failed_files(dataset_path, failed_files)
-    else:       
-        if len(failed_files) != 0:
-            # Save name of faulty files if no flag given
-            faulty_names_out_path = save_faulty_names(dataset_path, failed_files)
-            print(f"No processing flag given. Dataset contains faulty files. List of faulty files saved at {faulty_names_out_path}.")
+    # Save name of files containing invalid refinements
+    if len(failed_files) != 0:
+        faulty_names_out_path = save_faulty_names(dataset_path, failed_files)
+        print(f"List of files containing invalid refinements saved at {faulty_names_out_path}.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check dataset quality and handle faulty files.")
     parser.add_argument("--data", type=str, help="Path to the generated dataset folder.", required=True)
     parser.add_argument("--model", type=str, help="LLM to use for checking quality, either llama3 or gpt-3.5-turbo", default="llama3")
-    parser.add_argument("-r", action="store_true", help="Replace faulty files with original files.")
-    parser.add_argument("-d", action="store_true", help="Delete faulty files.")
+    parser.add_argument("-r", action="store_true", help="Replace faulty prompt refinements with original texts.")
 
     args = parser.parse_args()  
 
@@ -183,4 +153,4 @@ if __name__ == "__main__":
         print("Using GPT-3.5 Turbo model for checking similarity")
 
 
-    check_dataset_semantics(args.data, args.r, args.d, client, args.model)
+    check_dataset_semantics(args.data, args.r, client, args.model)

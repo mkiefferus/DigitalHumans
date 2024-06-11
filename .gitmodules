@@ -1,0 +1,3 @@
+[submodule "external_repos/MoMask"]
+	path = external_repos/MoMask
+	url = https://github.com/mkiefferus/MoMask

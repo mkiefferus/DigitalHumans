@@ -18,5 +18,6 @@ playground.*
 Anaconda3-2024.02-1-Linux-x86.64.sh
 Miniconda3-latest-Linux-x86_64
 
-prompt_enhancement_models/test1_cross_sample_info/*
-prompt_enhancement_models/test1_cross_sample_info
+prompt_enhancement/test1_cross_sample_info/*
+prompt_enhancement/test1_cross_sample_info
+

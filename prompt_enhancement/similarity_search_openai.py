@@ -144,7 +144,7 @@ def dataset_to_neighbours(info_file_name: str, model: object) -> Tuple[NearestNe
 
 
 def text_enhancement(info_file_name: str, nbrs: NearestNeighbors, index_to_text: Dict[int, str], model: object,
-                     openai_client: OpenAI) -> None:
+                     openai_client: OpenAI, early_stopping=None) -> None:
     """
     Runs full text enhancement pipeline for all files specified by info_file_name and saves them at folder
     altered_texts.
@@ -153,14 +153,18 @@ def text_enhancement(info_file_name: str, nbrs: NearestNeighbors, index_to_text:
     @param nbrs: NearestNeighbors object built with embeddings
     @param index_to_text: Dictionary mapping embedding index to text
     @param model: Embedding model to use, usually CLIP
+    @early stopping: Stop enhancement after x steps for testing purposes
     """
     try:
         nlp = spacy.load('en_core_web_sm')
     except OSError:
         print("Could not locate en_core_web_sm model, please install with \"python -m spacy download en_core_web_sm\"")
         exit(1)
-
-    num_lines = sum(1 for line in open(info_file_name))
+    if early_stopping is not None:
+        num_lines = min(sum(1 for line in open(info_file_name)), early_stopping)
+    else:
+        num_lines = sum(1 for line in open(info_file_name))
+        
     with open(info_file_name, 'r') as file:
         line_count = 0
         for line in tqdm(file, total=num_lines, desc="Generating enhanced motion descriptions"):
@@ -198,7 +202,7 @@ def text_enhancement(info_file_name: str, nbrs: NearestNeighbors, index_to_text:
                 break
 
 
-def main():
+def main(early_stopping = None):
     print(f"Using {DEVICE} device")
 
     # Load model
@@ -225,8 +229,4 @@ def main():
         except Exception as e:
             print(f"Error pickling data: {e}")
 
-    text_enhancement("test.txt", knn, index_to_text, model, client)
-
-
-if __name__ == "__main__":
-    main()
+    text_enhancement("test.txt", knn, index_to_text, model, client, early_stopping)

@@ -31,9 +31,9 @@ def parse_args():
     parser.add_argument('--texts_folder_name', type=str, required=True,
                         help="The name of the folder containing the texts to be used for training or evaluation. \
                             It should be located in the Momask HumanML3D dataset folder")
-    parser.add_argument('--res_checkpoint', type=str, required=False, default="original",
+    parser.add_argument('--res_name', type=str, required=False, default="original",
                         help="Which Residual Transformer model to evaluate. Defaults to the original MoMask model.")
-    parser.add_argument('--mask_checkpoint', type=str, required=False, default="original",
+    parser.add_argument('--mask_name', type=str, required=False, default="original",
                         help="Which Masked Transformer model to evaluate. Defaults to the original MoMask model.")
     
     known_args, _ = parser.parse_known_args()
@@ -65,8 +65,8 @@ if __name__ == '__main__':
     #     - singular evaluations: change files in momask
     #     - eval: evaluate model
     try:
-        res_name = 'tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw' if args.res_checkpoint == "original" else args.res_checkpoint
-        mask_name = 't2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns' if args.mask_checkpoint == "original" else args.mask_checkpoint
+        res_name = 'tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw' if args.res_name == "original" else args.res_name
+        mask_name = 't2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns' if args.mask_name == "original" else args.mask_name
         rvq_name = 'rvq_nq6_dc512_nc512_noshare_qdp0.2'
         # Set the working directory for executing the momask-scripts from
         working_dir = MOMASK_REPO_DIR

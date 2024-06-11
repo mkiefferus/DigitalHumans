@@ -66,7 +66,6 @@ if __name__ == '__main__':
     
     # init log file
     logfile = init_logging(args.experiment_name, args.verbose)
-    # os.makedirs(args.out_dir, exist_ok=True)
     
     # Source and output folder structure
     args.target_folder = os.path.join(HUMAN_ML_DIR, f"texts_{args.prompt_adaptation}_{args.system_prompt}_{SESSION_ID}")

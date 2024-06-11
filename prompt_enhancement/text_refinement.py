@@ -337,12 +337,12 @@ def refine_text(data_folder:str,
 def main(args):
 
     if args.use_llama:
-        print("Using Llama model. Make sure you specified the llama key")
+        print("Using Llama model. Make sure you specified the llama key and ollama is running on your computer")
         # Overwrite args with the ones from the config file
 
         # Set client and model
         base_url = 'http://localhost:11434/v1'
-        api_key = args.api_key
+        api_key = args.llama_key
         client = OpenAI(
             base_url = base_url,
             api_key=api_key

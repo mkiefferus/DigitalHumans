@@ -104,46 +104,69 @@ def replace_not_generated_test_files(adjusted_dataset_path):
     return
 
 def check_same_amount_of_prompts(adjusted_dataset_path):
-    """Compare files in folder_a and folder_b, adjust lines in folder_b files if necessary."""
+    """
+    Compare files in folder_a and folder_b and pad them to same length if necessary.
+    (adjusted files are padded)
+    """
+    
     original_dataset_path = TEXTS_FOLDER
+
+    # Get list of all files in folders
     files_a = [f for f in os.listdir(original_dataset_path) if os.path.isfile(os.path.join(original_dataset_path, f))]
     files_b = [f for f in os.listdir(adjusted_dataset_path) if os.path.isfile(os.path.join(adjusted_dataset_path, f))]
 
+    # Get filenames that are in both folders
     common_files = set(files_a).intersection(set(files_b))
 
     counter = 0
     for file_name in common_files:
+        # Construct full file paths
         file_a_path = os.path.join(original_dataset_path, file_name)
         file_b_path = os.path.join(adjusted_dataset_path, file_name)
 
+        # Open both files
         with open(file_a_path, 'r') as file_a, open(file_b_path, 'r') as file_b:
             lines_a = file_a.readlines()
             lines_b = file_b.readlines()
 
         len_a = len(lines_a)
         len_b = len(lines_b)
-        
+
+        # LLM would skip motions if initial motion descriptions are too similar
+        # If this is the case (=adjusted file has less motion descriptions than original):
+        # Repeat adjusted description until files have the same length
         while len_b < len_a:
             with open(file_b_path, 'w') as file_b:
+                # Get first line of adjusted file
                 first_line_b = lines_b[0] if lines_b else ""
+
+                # Repeat first line until files have the same length
                 lines_b.extend([first_line_b] * (len_a - len_b))
                 file_b.writelines(lines_b)
             counter += 1
-    print("amount of files changed that had uneven amount of prompts: ", counter)
+
+    print("Amount of files changed that had uneven amount of prompts: ", counter)
     
 
 def compare_flags_first_entry(adjusted_dataset_path):
+
+    # Define paths
     test_file_path = SOURCE_FILE
     original_dataset_path = TEXTS_FOLDER
+    
+    # Get list of filenames
     id_list = []
     with open(test_file_path, "r") as f:
         for idx, line in enumerate(f.readlines()):
                 id_list.append(line.strip())
+
     counter = 0
     for file in tqdm(id_list):
         try:
+            # Read original and adjusted file
             file_original = open(os.path.join(original_dataset_path, file + '.txt')).readlines()
             file_altered = open(os.path.join(adjusted_dataset_path, file + '.txt')).readlines()
+            
             idx = 0
             line = file_original[idx]
             line_split = line.strip().split('#')
@@ -164,8 +187,11 @@ def compare_flags_first_entry(adjusted_dataset_path):
                 line_split_altered[3] = str(to_tag)
                 file_altered[idx] = '#'.join(line_split_altered) + '\n'
                 counter +=1
+            
+            # Write adjustments to file
             with open(os.path.join(adjusted_dataset_path, file + '.txt'), "w") as f:
                 f.writelines(file_altered)
+
         except IndexError as e:
             print("A file doesn't seem to have a sample in line 0.")
             print(f"Replacing file {os.path.join(adjusted_dataset_path, file + '.txt')} with the original.")

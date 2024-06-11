@@ -5,7 +5,6 @@ data
 digitalHumans
 venv
 
-external_repos/momask-codes/*
 data/*
 .DS_Store
 .git

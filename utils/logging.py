@@ -5,23 +5,28 @@ import os
 import sys
 from utils import LOG_DIR, SESSION_ID
 
-def init_logging(experiment_name, run_name):
-    log_name = f"{experiment_name}_{run_name}_{SESSION_ID}.log"
-    log_file = os.path.join(LOG_DIR, log_name)
-    logging.basicConfig(filename=log_file,
-                    encoding='utf-8',
-                    filemode='w',
-                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                    datefmt='%H:%M:%S')
-    
-    
-    file = open(log_file,"w")
-    sys.stdout = file
-    
-    print(f"Experiment: {experiment_name}, Run: {run_name}")
-    return file
+def init_logging(experiment_name, verbose):
+    if not verbose:
+        log_name = f"{experiment_name}_{int(float(SESSION_ID))}.log"
+        log_file = os.path.join(LOG_DIR, log_name)
+        print("Starting logging to this file: ", log_file)
+        logging.basicConfig(filename=log_file,
+                        encoding='utf-8',
+                        filemode='w',
+                        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                        datefmt='%H:%M:%S')
+        
+        
+        file = open(log_file,"w")
+        sys.stdout = file
+        
+        print(f"Experiment: {experiment_name}")
+        return file
+    return None
 
 def end_logging(logfile):
+    if logfile is None:
+        return
     logfile.close()
     
 

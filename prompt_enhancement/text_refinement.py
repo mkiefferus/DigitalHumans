@@ -10,19 +10,6 @@ from datetime import datetime
 import numpy as np
 import yaml
 
-from quality_control import check_dataset_quality
-
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # the project root directory
-# CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # the project root directory
-LOG_DIR = os.path.join(ROOT_DIR, "out", "logs")
-EXTERNAL_REPOS_DIR = os.path.join(ROOT_DIR, "external_repos")
-MOMASK_REPO_DIR = os.path.join(EXTERNAL_REPOS_DIR, "momask-codes")
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-HUMAN_ML_DIR = os.path.join(ROOT_DIR, "external_repos/momask-codes/dataset/HumanML3D")
-
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])
 
@@ -111,7 +98,7 @@ def process_data(filenames:list, observation_instead_of_motion=False):
         Tuple[str, Dict[str, Dict[str]]]: A tuple containing the JSON string of motions and a dictionary of annotations.
     """
 
-    base_dir = os.path.join(HUMAN_ML_DIR, "texts")
+    base_dir = TEXTS_DIR
 
     input_dict = {}
     annotations_dict = {}
@@ -260,9 +247,8 @@ def refine_text(data_folder:str,
                 refine_specific_samples_txt_path=None,
                 stop_after_n_batches=None,
                 continue_previous=None,
-                use_cross_sample_information=False,
-                replace=False,
-                delete=False):
+                use_cross_sample_information=False
+                ):
     """Refines text in datafolder using given model and system prompt"""
 
     if continue_previous is not None:
@@ -281,8 +267,6 @@ def refine_text(data_folder:str,
     print(f"Total files found: {len(files)}")
 
     BATCH_PROCESSING = False if batch_size < 1 else True
-
-
 
     if BATCH_PROCESSING:
 
@@ -350,122 +334,61 @@ def refine_text(data_folder:str,
 
     print("Text refinement complete.")
 
-    # Check dataset quality
-    check_dataset_quality(dataset_path=output_folder, replace=replace, delete=delete, test=False) # TODO: adjust test flag
+def main(args):
 
-def main():
-    parser = argparse.ArgumentParser(description="Text Enhancement Pipeline")
-    parser.add_argument("--folder_name", type=str,
-                        help="Specifies the target folder name where generated texts are saved to")
-    parser.add_argument("--system_prompt", type=str, help="Name of JSON file containing system prompt",
-                        default='extra_sentence.json')
-    parser.add_argument("--batch_size", type=int, default=1, help="If larger than 1, the model will process multiple files at once.")
-    parser.add_argument("--early_stop", type=int, default=None, help="Stop after n refined samples for testing purposes")
-    parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
-    parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine all samples. Default: refine test samples only")
-    parser.add_argument("--samples_text_file", type=str, default="test.txt", help="Text file specifying samples to refine. Default: test.txt")
-    parser.add_argument("--use_cross_sample_information", type=bool, default=False, help="Use information from multiple samples of the same text file to output enhanced samples with more information. Makes batch_size arg invalid")
-    parser.add_argument("--use_example", type=bool, default=False, help="Whether to use example prompts for the model assistant and user (specified as ex_<system_prompt>.json) in folder prompts_examples")
-    parser.add_argument("--from_config", type=bool, default=False, help="Load configuration from config.yaml")
-    parser.add_argument("-r", "--replace", action="store_true", help="Replace '#No annotation' with '#0.0#0.0'.")
-    parser.add_argument("-d", "--delete", action="store_true", help="Delete faulty files.")
-    args = parser.parse_args()
-
-    client = OpenAI()
-
-    # Load args from config file if 'from_config'
-    if args.from_config:
-        with open(os.path.join(ROOT_DIR, "prompt_enhancement_models", "config.yaml"), 'r') as file:
-            config = yaml.load(file, Loader=yaml.FullLoader)
-
-        print("Overwriting args with config file...")
-
+    if args.use_llama:
+        print("Using Llama model. Make sure you specified the llama key")
         # Overwrite args with the ones from the config file
-        for arg, value in config.items():
-            setattr(args, arg, value)
 
         # Set client and model
-        base_url = getattr(args, 'base_url', False)
-        api_key = getattr(args, 'api_key', False)
-
-        if base_url and api_key:
-            client = OpenAI(
-                base_url = base_url,
-                api_key=api_key
-            )
+        base_url = 'http://localhost:11434/v1'
+        api_key = args.api_key
+        client = OpenAI(
+            base_url = base_url,
+            api_key=api_key
+        )
+    else:
+        client = OpenAI()
+    
+    # set global variables to use throughout this file
+    global DEVICE, HUMAN_ML_DIR, TEXTS_DIR
+    DEVICE = args.DEVICE
+    HUMAN_ML_DIR = args.HUMAN_ML_DIR
+    TEXTS_DIR = args.texts_folder
 
     print(f"Using {DEVICE} device")
 
-    # Warn if no processing flag is given
-    if not args.replace and not args.delete:
-        raise Warning("No processing flag given. Use -r to replace or -d to delete possible faulty files.")
-
     # Set modelname to default if not specified
     model = getattr(args, 'model', 'gpt-3.5-turbo')
-
-    # Ensure folder structure exists
-    if args.folder_name:
-        target_folder = os.path.join(HUMAN_ML_DIR, args.folder_name)
-    else:
-        timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        target_folder = os.path.join(HUMAN_ML_DIR, f"altered_texts_{timestamp}")
-        
-    target_folder = args.continue_previous if args.continue_previous is not None else target_folder
-
-    if not os.path.exists(target_folder):
-        os.makedirs(target_folder)
         
     # Load example prompt for model assistant and user
     if args.use_example:
-        with open(os.path.join(ROOT_DIR, "prompts_examples" ,f"ex_{args.system_prompt}"), 'r') as file:
+        with open(os.path.join(args.ROOT_DIR, "prompts_examples" ,f"ex_{args.system_prompt}"), 'r') as file:
             example_prompt = json.load(file)
     else: example_prompt = None
 
     # Load system prompt
-    system_prompt_path = os.path.join(ROOT_DIR, "prompts", args.system_prompt)
+    if args.system_prompt[-5:] != ".json":
+        args.system_prompt += ".json"
+    system_prompt_path = os.path.join(args.ROOT_DIR, "prompts", args.system_prompt)
     with open(system_prompt_path, 'r') as file:
         system_prompt = json.load(file).get('system_prompt')
 
+    # set refinement option to None if not specified
     if not args.refine_all_samples:
-        refine_specific_samples_txt_path = os.path.join(MOMASK_REPO_DIR, "dataset", "HumanML3D", args.samples_text_file)
+        refine_specific_samples_txt_path = args.source_file
     else:
         refine_specific_samples_txt_path = None
 
-    _config = {
-        "config": {
-            "folder_name": target_folder,
-            "system_prompt": args.system_prompt,
-            "client": str(client),
-            "model": model,
-            "batch_size": args.batch_size,
-            "early_stop": args.early_stop,
-            "continue_previous": args.continue_previous,
-            "refine_specific_samples_txt_path": refine_specific_samples_txt_path
-        }
-    }
-    print("Configuration: ", _config)
-    
-    # Write configuration to a YAML file
-    config_path = os.path.join(target_folder, 'config.yaml')
-    with open(config_path, 'w') as yaml_file:
-        yaml.dump(_config, yaml_file, default_flow_style=False)
-
-
-    refine_text(data_folder=os.path.join(HUMAN_ML_DIR, "texts"), 
-            output_folder=target_folder,
+    refine_text(data_folder=args.texts_folder, 
+            output_folder=args.target_folder,
             system_prompt=system_prompt,
             example_prompt=example_prompt,
             batch_size=args.batch_size,
             client=client,
             model=model,
             refine_specific_samples_txt_path=refine_specific_samples_txt_path,
-            stop_after_n_batches=args.early_stop,
+            stop_after_n_batches=args.early_stopping,
             continue_previous=args.continue_previous,
             use_cross_sample_information=args.use_cross_sample_information,
-            replace=args.replace,
-            delete=args.delete
         )
-
-
-if __name__ == "__main__":
-    main()

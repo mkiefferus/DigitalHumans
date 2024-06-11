@@ -102,12 +102,13 @@ def text_to_embedding(text: str, model: object) -> np.array:
     return text_features.cpu().numpy()[0]
 
 
-def dataset_to_neighbours(info_file_name: str, model: object) -> Tuple[NearestNeighbors, Dict[int, str]]:
+def dataset_to_neighbours(info_file_name: str, source_folder:str, model: object) -> Tuple[NearestNeighbors, Dict[int, str]]:
     """
     Given a text file specifying which files belong to the dataset split, return a fitted NearestNeighbours object
     containing the embeddings of all motion descriptions in these files along with a dictionary mapping
     embedding index to text.
     @param info_file_name: Text file specifying which files belong to the dataset split
+    @param source_files: Folder in which all texts are saved to
     @param model: Embedding model to use, usually CLIP
     @return: NearestNeighbors object built with embeddings, dictionary mapping embedding index to text
     """
@@ -119,7 +120,7 @@ def dataset_to_neighbours(info_file_name: str, model: object) -> Tuple[NearestNe
         line_count = 0
         for line in tqdm(file, total=num_lines, desc="Generating embeddings"):
             file_name = line.strip()
-            file_path = os.path.join("texts/", file_name + ".txt")
+            file_path = os.path.join(source_folder, file_name + ".txt")
             try:
                 with open(file_path, 'r') as opened_file:
                     # Read the file line by line
@@ -143,13 +144,15 @@ def dataset_to_neighbours(info_file_name: str, model: object) -> Tuple[NearestNe
     return knn_model, index_to_text
 
 
-def text_enhancement(info_file_name: str, nbrs: NearestNeighbors, index_to_text: Dict[int, str], model: object,
+def text_enhancement(info_file_name: str, source_folder: str, target_folder: str, nbrs: NearestNeighbors, index_to_text: Dict[int, str], model: object,
                      openai_client: OpenAI, early_stopping=None) -> None:
     """
     Runs full text enhancement pipeline for all files specified by info_file_name and saves them at folder
     altered_texts.
     @param openai_client:
     @param info_file_name: Text file specifying which files belong to the dataset split
+    @param source_folder: Folder in which all texts are
+    @param target_folder: Folder to which enhanced texts are saved
     @param nbrs: NearestNeighbors object built with embeddings
     @param index_to_text: Dictionary mapping embedding index to text
     @param model: Embedding model to use, usually CLIP
@@ -172,10 +175,10 @@ def text_enhancement(info_file_name: str, nbrs: NearestNeighbors, index_to_text:
             file_name = line.strip()
 
             # Construct the full path to the file
-            file_path = os.path.join("texts/", file_name + ".txt")
+            file_path = os.path.join(source_folder, file_name + ".txt")
 
             # Open the file
-            altered_text_path = os.path.join("altered_texts/", file_name + ".txt")
+            altered_text_path = os.path.join(target_folder, file_name + ".txt")
             with open(file_path, 'r') as opened_file:
                 # Clear the file
                 open(altered_text_path, 'w').close()
@@ -202,7 +205,7 @@ def text_enhancement(info_file_name: str, nbrs: NearestNeighbors, index_to_text:
                 break
 
 
-def main(early_stopping = None):
+def main(args):
     print(f"Using {DEVICE} device")
 
     # Load model
@@ -218,10 +221,10 @@ def main(early_stopping = None):
                 knn, index_to_text = pickle.load(f)
         except Exception as e:
             print(f"Error loading pickle file: {e}")
-            knn, index_to_text = dataset_to_neighbours("train.txt", model)
+            knn, index_to_text = dataset_to_neighbours(args.source_file, args.texts_folder, model)
     else:
         print(f"Did not find embeddings pickle file, recomputing...")
-        knn, index_to_text = dataset_to_neighbours("train.txt", model)
+        knn, index_to_text = dataset_to_neighbours(args.source_file, args.texts_folder, model)
         # Pickle the obtained data
         try:
             with open(pickle_file_path, 'wb') as f:
@@ -229,4 +232,4 @@ def main(early_stopping = None):
         except Exception as e:
             print(f"Error pickling data: {e}")
 
-    text_enhancement("test.txt", knn, index_to_text, model, client, early_stopping)
+    text_enhancement(args.source_file, args.texts_folder, args.target_folder, knn, index_to_text, model, client, args.early_stopping)

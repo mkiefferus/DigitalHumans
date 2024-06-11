@@ -19,11 +19,11 @@ def parse_args():
                         with an additional value of the current time.")
     parser.add_argument('-pa', '--prompt_adaptation', type=str, required=False, default="regular",
                         help="The name of the prompt adaptation technique to be used. Available: similarity, regular")
-    parser.add_argument('-qc', '--quality_control_only', type=bool, required=False, default=False,
+    parser.add_argument('-qc', '--quality_control_only', action="store_true", required=False,
                         help="Whether to only perform quality control on the files in the dataset.")
     parser.add_argument('-sp', '--system_prompt', type=str, required=False, default="added_details",
                         help="The name of the system prompt to be given to the prompt adaptation model, as can be viewed in folder 'prompts'.")
-    parser.add_argument('-v', '--verbose', type=bool, required=False, default=False,
+    parser.add_argument('-v', '--verbose', action="store_true", required=False,
                         help="Whether to output information into the console (True) or the logfile (False).")
     parser.add_argument('-s', '--early_stopping', type=int, required=False, default=None,
                         help="Whether to stop the refinement after x steps for testing purposes.")
@@ -31,11 +31,11 @@ def parse_args():
     # below args are only necessary for regular enhancement, not similarity search
     parser.add_argument("--batch_size", type=int, default=1, help="If larger than 1, the model will process multiple files at once.")
     parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
-    parser.add_argument("--refine_all_samples", type=bool, default=False, help="Refine all samples. Default: refine test samples only")
+    parser.add_argument("--refine_all_samples", action="store_true", required=False, help="Refine all samples. Default: refine test samples only")
     parser.add_argument("--samples_text_file", type=str, default="test.txt", help="Text file specifying samples to refine. Default: test.txt")
-    parser.add_argument("--use_cross_sample_information", type=bool, default=False, help="Use information from multiple samples of the same text file to output enhanced samples with more information. Makes batch_size arg invalid")
-    parser.add_argument("--use_example", type=bool, default=False, help="Whether to use example prompts for the model assistant and user (specified as ex_<system_prompt>.json) in folder prompts_examples")
-    parser.add_argument("--use_llama", type=bool, default=False, help="Use Llama model")
+    parser.add_argument("--use_cross_sample_information",  action="store_true", required=False, help="Use information from multiple samples of the same text file to output enhanced samples with more information. Makes batch_size arg invalid")
+    parser.add_argument("--use_example", action="store_true", required=False, help="Whether to use example prompts for the model assistant and user (specified as ex_<system_prompt>.json) in folder prompts_examples")
+    parser.add_argument("--use_llama", action="store_true", required=False, help="Use Llama model")
     parser.add_argument("--llama_key", type=str, default="ollama", help="Key for the llama model")
     
     # below args are for quality control

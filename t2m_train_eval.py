@@ -14,17 +14,17 @@ def parse_args():
     parser.add_argument('-e', '--experiment_name', type=str, required=False, 
                         help="The experiment name. Default to the enhanced texts name \
                         with an additional value of the current time.")
-    parser.add_argument('-tm', '--train_mask', type=bool, default=False,
+    parser.add_argument('-tm', '--train_mask', action="store_true", required=False,
                         help="Set to true if you want to train the Masked Transformer end-to-end")
-    parser.add_argument('-tr', '--train_res', type=bool, default=False,
+    parser.add_argument('-tr', '--train_res', action="store_true",
                         help="Set to true if you want to train the Residual Transformer end-to-end")
-    parser.add_argument('-t', '--eval_all_metrics', type=bool, default=False,
+    parser.add_argument('-t', '--eval_all_metrics', action="store_true", required=False,
                         help="Whether to evaluate the model on all samples in total to get all metrics.")
-    parser.add_argument('--eval_single_samples', type=str, required=False,
+    parser.add_argument('--eval_single_samples', action="store_true", required=False,
                         help="Whether to generate a multimodal distance scores for each sample in the dataset.")
-    parser.add_argument('-v', '--verbose', type=bool, required=False, default=False,
+    parser.add_argument('-v', '--verbose', action="store_true", required=False,
                         help="Whether to output information into the console (True) or the logfile (False).")
-    parser.add_argument('-r', '--resume_training', type=bool, required=False, default=False,
+    parser.add_argument('-r', '--resume_training',  action="store_true", required=False,
                         help="Whether to resume a training that stopped before.")
     
     # which models and texts to use

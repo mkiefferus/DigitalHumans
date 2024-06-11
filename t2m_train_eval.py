@@ -14,23 +14,28 @@ def parse_args():
     parser.add_argument('-e', '--experiment_name', type=str, required=False, 
                         help="The experiment name. Default to the enhanced texts name \
                         with an additional value of the current time.")
-    parser.add_argument('--texts_folder_name', type=str, required=True,
-                        help="The name of the folder containing the texts to be used for training or evaluation. \
-                            It should be located in the Momask HumanML3D dataset folder")
     parser.add_argument('-tm', '--train_mask', type=bool, default=False,
                         help="Set to true if you want to train the Masked Transformer end-to-end")
     parser.add_argument('-tr', '--train_res', type=bool, default=False,
                         help="Set to true if you want to train the Residual Transformer end-to-end")
-    parser.add_argument('-t', '--eval', type=bool, default=False,
-                        help="Set to true if you want to evaluaate the model. If true, specify the model checkpoint.")
-    parser.add_argument('--evaluate_single_samples', type=str, required=False,
-                        help="Whether to generate single scores for each sample in the dataset.")
-    
-    parser.add_argument('--model_checkpoint', type=str, required=False, default="original",
-                        help="Which model to evaluate. Defaults to the original MoMask model.")
+    parser.add_argument('-t', '--eval_all_metrics', type=bool, default=False,
+                        help="Whether to evaluate the model on all samples in total to get all metrics.")
+    parser.add_argument('--eval_single_samples', type=str, required=False,
+                        help="Whether to generate a multimodal distance scores for each sample in the dataset.")
     parser.add_argument('-v', '--verbose', type=bool, required=False, default=False,
                         help="Whether to output information into the console (True) or the logfile (False).")
-
+    parser.add_argument('-r', '--resume_training', type=bool, required=False, default=False,
+                        help="Whether to resume a training that stopped before.")
+    
+    # which models and texts to use
+    parser.add_argument('--texts_folder_name', type=str, required=True,
+                        help="The name of the folder containing the texts to be used for training or evaluation. \
+                            It should be located in the Momask HumanML3D dataset folder")
+    parser.add_argument('--res_checkpoint', type=str, required=False, default="original",
+                        help="Which Residual Transformer model to evaluate. Defaults to the original MoMask model.")
+    parser.add_argument('--mask_checkpoint', type=str, required=False, default="original",
+                        help="Which Masked Transformer model to evaluate. Defaults to the original MoMask model.")
+    
     known_args, _ = parser.parse_known_args()
     
     # check if experiment name is set, otherwise create automatically
@@ -58,50 +63,152 @@ if __name__ == '__main__':
     
     # TODO:
     #     - singular evaluations: change files in momask
-    #     - change model names for checkpoints
-    #     - train_mask: train masked transformer 
-    #     - train_res: train residual transformer
     #     - eval: evaluate model
     try:
+        res_name = 'tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw' if args.res_checkpoint == "original" else args.res_checkpoint
+        mask_name = 't2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns' if args.mask_checkpoint == "original" else args.mask_checkpoint
+        rvq_name = 'rvq_nq6_dc512_nc512_noshare_qdp0.2'
+        # Set the working directory for executing the momask-scripts from
+        working_dir = MOMASK_REPO_DIR
         
-        print("Here")
-        import subprocess
+        # Train the Masked Transformer
         if args.train_mask:
-            # train massked transformer
-            # if args.model_checkpoint == "original" and not args.verbose:
-            #     cmd = f'cd external_repos/momask-codes;python eval_t2m_trans_res.py --res_name tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw --dataset_name t2m --name t2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns --gpu_id 0 --cond_scale 4 --time_steps 10 --ext evaluation --batch_size 2 > {logfile} 2>&1'
-            # # p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-            # os.system(cmd)
+            command = command = [
+                'python', 'train_t2m_transformer.py',
+                '--name', mask_name,
+                '--gpu_id', '0',
+                '--dataset_name', 't2m',
+                '--batch_size', '64',
+                '--vq_name', rvq_name
+            ]
+            if args.resume_training:
+                command.append('--is_continue')
+            if not args.verbose:
+                with open(log_file_name, 'w') as f:
+                    # Run the command in the specified working directory
+                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
+            else:
+                subprocess.run(command, cwd=working_dir)
+            
+        # Train the Residual Transformer
+        if args.train_res:
             command = [
                 'python', 'eval_t2m_trans_res.py',
-                '--res_name', 'tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw',
+                '--res_name', res_name,
                 '--dataset_name', 't2m',
-                '--name', 't2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns',
+                '--name', mask_name,
                 '--gpu_id', '0',
                 '--cond_scale', '4',
                 '--time_steps', '10',
                 '--ext', 'evaluation',
                 '--batch_size', '2'
             ]
-            from pathlib import Path
-            # Set the working directory
-            working_dir = MOMASK_REPO_DIR
-
-            # Open the log file in write mode
-            with open(log_file_name, 'w') as f:
-                # Run the command in the specified working directory
-                subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
-            #sys.path.append(MOMASK_REPO_DIR) # add to sys so that modules inside the repo can be imported
-            #sys.path.append(os.path.join(MOMASK_REPO_DIR, "utils/"))
-            #sys.argv = ['--res_name=tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw_k', f'--dataset_name={dataset_name}', "--name=t2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns_k", "--gpu_id=0", "--cond_scale=2", "--time_steps=10", "--ext=evaluation"] 
+            if args.resume_training:
+                command.append('--is_continue')
+            if not args.verbose:
+                with open(log_file_name, 'w') as f:
+                    # Run the command in the specified working directory
+                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
+            else:
+                subprocess.run(command, cwd=working_dir)
+        
+        # Evaluate the models on all samples to get all metrics
+        if args.eval_all_metrics:
+            command = [
+                'python', 'eval_t2m_trans_res.py', 
+                '--res_name', res_name, 
+                '--dataset_name', 't2m', 
+                '--name', mask_name, 
+                '--gpu_id', '0', 
+                '--cond_scale', '4', 
+                '--time_steps', '10', 
+                '--ext', 'evaluation'
+            ]
+            if not args.verbose:
+                with open(log_file_name, 'w') as f:
+                    # Run the command in the specified working directory
+                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
+            else:
+                subprocess.run(command, cwd=working_dir)
+        
+        # Evaluate the models to get sample-wise multimodal distances
+        if args.eval_single_samples:
             
-            # exec(open(exec_file).read(), {"__name__": ""})
+            # exchange the original momask files with the ones in "adapted codes" for single sample evaluation
+            adapted_codes_folder = os.path.join(MOMASK_REPO_DIR, "adapted_codes")
+            adapted_dataset_motion_loader = os.path.join(adapted_codes_folder, "dataset_motion_loader.py")
+            adapted_eval_t2m = os.path.join(adapted_codes_folder, "eval_t2m.py")
+            adapted_get_opt = os.path.join(adapted_codes_folder, "get_opt.py")
+            adapted_t2m_dataset = os.path.join(adapted_codes_folder, "t2m_dataset.py")
+            adapted_word_vectorizer = os.path.join(adapted_codes_folder, "word_vectorizer.py")
+            
+            original_dataset_motion_loader = os.path.join(MOMASK_REPO_DIR, "motion_loaders", "dataset_motion_loader.py")
+            original_eval_t2m  = os.path.join(MOMASK_REPO_DIR, "utils", "eval_t2m.py")
+            original_get_opt  = os.path.join(MOMASK_REPO_DIR, "utils", "get_opt.py")
+            original_t2m_dataset  = os.path.join(MOMASK_REPO_DIR, "data", "t2m_dataset.py")
+            original_word_vectorizer  = os.path.join(MOMASK_REPO_DIR, "utils", "word_vectorizer.py")
+            
+            altered_original_dataset_motion_loader = os.path.join(MOMASK_REPO_DIR, "motion_loaders", "dataset_motion_loader_original.py")
+            altered_original_eval_t2m  = os.path.join(MOMASK_REPO_DIR, "utils", "eval_t2m_original.py")
+            altered_original_get_opt  = os.path.join(MOMASK_REPO_DIR, "utils", "get_opt_original.py")
+            altered_original_t2m_dataset  = os.path.join(MOMASK_REPO_DIR, "data", "t2m_dataset_original.py")
+            altered_original_word_vectorizer  = os.path.join(MOMASK_REPO_DIR, "utils", "word_vectorizer_original.py")
+            
+            # rename original files
+            os.rename(original_dataset_motion_loader, altered_original_dataset_motion_loader)
+            os.rename(original_eval_t2m, altered_original_eval_t2m)
+            os.rename(original_get_opt, altered_original_get_opt)
+            os.rename(original_t2m_dataset, altered_original_t2m_dataset)
+            os.rename(original_word_vectorizer, altered_original_word_vectorizer)
+            
+            # move adapted files to original file locations
+            os.rename(adapted_dataset_motion_loader, original_dataset_motion_loader)
+            os.rename(adapted_eval_t2m, original_eval_t2m)
+            os.rename(adapted_get_opt, original_get_opt)
+            os.rename(adapted_t2m_dataset, original_t2m_dataset)
+            os.rename(adapted_word_vectorizer, original_word_vectorizer)
+            
+            command = [
+                'python', 'eval_t2m_trans_res.py', 
+                '--res_name', res_name, 
+                '--dataset_name', 't2m', 
+                '--name', mask_name, 
+                '--gpu_id', '0', 
+                '--cond_scale', '4', 
+                '--time_steps', '10', 
+                '--ext', 'evaluation'
+            ]
+            try:
+                if not args.verbose:
+                    with open(log_file_name, 'w') as f:
+                        # Run the command in the specified working directory
+                        subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
+                else:
+                    subprocess.run(command, cwd=working_dir)
+            except Exception as e:
+                print(e)
+            finally:
+                # rename the altered files back to their original names
+                os.rename(original_dataset_motion_loader, adapted_dataset_motion_loader)
+                os.rename(original_eval_t2m, adapted_eval_t2m)
+                os.rename(original_get_opt, adapted_get_opt)
+                os.rename(original_t2m_dataset, adapted_t2m_dataset)
+                os.rename(original_word_vectorizer, adapted_word_vectorizer)
+                
+                # rename the original files back to their original names
+                os.rename(altered_original_dataset_motion_loader, original_dataset_motion_loader)
+                os.rename(altered_original_eval_t2m, original_eval_t2m)
+                os.rename(altered_original_get_opt, original_get_opt)
+                os.rename(altered_original_t2m_dataset, original_t2m_dataset)
+                os.rename(altered_original_word_vectorizer, original_word_vectorizer) 
+                               
+                
     except Exception as e: 
-        # if there is any error while running the T2M model, we still want to continue this script to rename the folder to their original names 
-        logging.error(e)
+        # if there is any error while running the T2M model, we still want to continue this script to rename the texts folders to their original names 
         print(e)
+    
     finally:
-        # rename folders back to their original names if prompt adaptation was performed
+        # rename text folders back to their original names if prompt adaptation was performed
         os.rename(original_folder, args.texts_folder)
         os.rename(altered_original_folder, original_folder)
         

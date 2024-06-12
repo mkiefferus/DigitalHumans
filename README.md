@@ -1,5 +1,12 @@
 # Enhancing Text-to-Motion Synthesis through Language Models
 
+## Demo
+Our approach can enhance output motion quality by adding contextually relevant text signals or by translating high-level motion descriptions to a set of low-level motion descriptions.
+In the following, we show 3 examples for qualitative improvements of the generated motion and one example for a degradation, where the LLM omitted important information.
+Note that we subsequently built a quality check stage to minimize the occurrence of such refinement failures.
+|![](media/broadjump_GT)<br>Ground Truth|![](image-path-2)<br>Unrefined (Momask)| ![](image-path-2)<br>Unrefined (Ours) |
+|:-:|:-:|:-:|
+
 ## Setup
 ### Installing neccessary libraries
 #### Text Enhancement

@@ -4,8 +4,16 @@
 Our approach can enhance output motion quality by adding contextually relevant text signals or by translating high-level motion descriptions to a set of low-level motion descriptions.
 In the following, we show 3 examples for qualitative improvements of the generated motion and one example for a degradation, where the LLM omitted important information.
 Note that we subsequently built a quality check stage to minimize the occurrence of such refinement failures.
-|![](media/broadjump_GT)<br>Ground Truth|![](image-path-2)<br>Unrefined (Momask)| ![](image-path-2)<br>Unrefined (Ours) |
+|Ground Truth|Unrefined (MoMask)|Refined (Ours)|
 |:-:|:-:|:-:|
+|![Broadjump GT](./media/broadjump_GT.gif)|![Broadjump Unrefined](./media/broadjump_unrefined.gif)| ![Broadjump Refined](./media/broadjump_refined.gif)|
+| a person performs a typical broadjump | a person performs a typical broadjump | The person bends their arms and crouches down preparing for a jump, then extend their arms back as they propel themselves forward with their legs. |
+|![Pitch GT](./media/pitch_GT.gif)|![Pitch Unrefined](./media/pitch_unrefined.gif)| ![Pitch Refined](./media/pitch_refined.gif)|
+| a figure winds up for the pitch | a figure winds up for the pitch |The figure pulls back their arms in preparation for throwing something. |
+|![Golf GT](./media/golf_GT.gif)|![Golf Unrefined](./media/golf_unrefined.gif)| ![Golf Refined](./media/golf_refined.gif)|
+| person is performing a golf motion | person is performing a golf motion | Imitating a golf swing, the person assumes a stance and clasps their hand together in a golf grip, leans forward to simulate a put motion that swings from left to right. |
+|![Circle GT](./media/circle_GT.gif)|![Circle Unrefined](./media/circle_unrefined.gif)| ![Circle Refined](./media/circle_refined.gif)|
+| a person slowly walks in a counter clockwise circle | a person slowly walks in a counter clockwise circle | The person's arms are relaxed and swing gently with each step. |
 
 ## Setup
 ### Installing neccessary libraries

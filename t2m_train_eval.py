@@ -60,10 +60,6 @@ if __name__ == '__main__':
     os.rename(args.texts_folder, original_folder)
     
     # Put all in a try except block so that the folders are renamed to their original statusif there is an error
-    
-    # TODO:
-    #     - singular evaluations: change files in momask
-    #     - eval: evaluate model
     try:
         res_name = 'tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw' if args.res_name == "original" else args.res_name
         mask_name = 't2m_nlayer8_nhead6_ld384_ff1024_cdp0.1_rvq6ns' if args.mask_name == "original" else args.mask_name

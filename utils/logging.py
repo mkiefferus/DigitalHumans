@@ -38,7 +38,7 @@ def init_logging_old_python_version(experiment_name, verbose):
         
         print(f"Experiment: {experiment_name}")
         return file, log_file
-    return None
+    return None, None
 
 def end_logging(logfile):
     if logfile is None:

@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import logging
 import os
+import sys
 
 from utils import SESSION_ID, MOMASK_REPO_DIR, HUMAN_ML_DIR
 from utils.logging import init_logging_old_python_version, end_logging
@@ -67,6 +68,23 @@ if __name__ == '__main__':
         # Set the working directory for executing the momask-scripts from
         working_dir = MOMASK_REPO_DIR
         
+        # create a Streamdirector to capture all print Statements to the log file if verbose=False:
+        class StreamRedirector:
+            def __init__(self, log_file):
+                self.log_file = log_file
+                self.original_stdout = sys.stdout
+                self.original_stderr = sys.stderr
+
+            def __enter__(self):
+                self.log_file_handle = open(self.log_file, 'a')
+                sys.stdout = self.log_file_handle
+                sys.stderr = self.log_file_handle
+
+            def __exit__(self, exc_type, exc_value, traceback):
+                sys.stdout = self.original_stdout
+                sys.stderr = self.original_stderr
+                self.log_file_handle.close()
+        
         # Train the Masked Transformer
         if args.train_mask:
             command = command = [
@@ -80,9 +98,9 @@ if __name__ == '__main__':
             if args.resume_training:
                 command.append('--is_continue')
             if not args.verbose:
-                with open(log_file_name, 'w') as f:
+                with StreamRedirector(log_file_name):
                     # Run the command in the specified working directory
-                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
+                    subprocess.run(command, cwd=working_dir)
             else:
                 subprocess.run(command, cwd=working_dir)
             
@@ -102,9 +120,9 @@ if __name__ == '__main__':
             if args.resume_training:
                 command.append('--is_continue')
             if not args.verbose:
-                with open(log_file_name, 'w') as f:
+                with StreamRedirector(log_file_name):
                     # Run the command in the specified working directory
-                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
+                    subprocess.run(command, cwd=working_dir)
             else:
                 subprocess.run(command, cwd=working_dir)
         
@@ -121,9 +139,9 @@ if __name__ == '__main__':
                 '--ext', 'evaluation'
             ]
             if not args.verbose:
-                with open(log_file_name, 'w') as f:
+                with StreamRedirector(log_file_name):
                     # Run the command in the specified working directory
-                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
+                    subprocess.run(command, cwd=working_dir)
             else:
                 subprocess.run(command, cwd=working_dir)
         
@@ -176,9 +194,9 @@ if __name__ == '__main__':
             ]
             try:
                 if not args.verbose:
-                    with open(log_file_name, 'w') as f:
+                    with StreamRedirector(log_file_name):
                         # Run the command in the specified working directory
-                        subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
+                        subprocess.run(command, cwd=working_dir)
                 else:
                     subprocess.run(command, cwd=working_dir)
             except Exception as e:

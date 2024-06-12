@@ -60,6 +60,16 @@ if __name__ == '__main__':
     os.rename(original_folder, altered_original_folder)
     os.rename(args.texts_folder, original_folder)
     
+    # folder for adapted codes to later exchange pythons scipts from:
+    adapted_codes_folder = os.path.join(MOMASK_REPO_DIR, "adapted_codes")
+    
+    # change train_t2m_transformer.py in Momask to avoid duplicated logging:
+    original_train_t2m = os.path.join(MOMASK_REPO_DIR, "train_t2m_transformer.py")
+    altered_original_train_t2m = os.path.join(MOMASK_REPO_DIR, "train_t2m_transformer_original.py")
+    adapted_train_t2m = os.path.join(adapted_codes_folder, "train_t2m_transformer.py")
+    os.rename(original_train_t2m, altered_original_train_t2m)
+    os.rename(adapted_train_t2m, original_train_t2m)
+    
     # Put all in a try except block so that the folders are renamed to their original statusif there is an error
     try:
         res_name = 'tres_nlayer8_ld384_ff1024_rvq6ns_cdp0.2_sw' if args.res_name == "original" else args.res_name
@@ -67,23 +77,6 @@ if __name__ == '__main__':
         rvq_name = 'rvq_nq6_dc512_nc512_noshare_qdp0.2'
         # Set the working directory for executing the momask-scripts from
         working_dir = MOMASK_REPO_DIR
-        
-        # create a Streamdirector to capture all print Statements to the log file if verbose=False:
-        class StreamRedirector:
-            def __init__(self, log_file):
-                self.log_file = log_file
-                self.original_stdout = sys.stdout
-                self.original_stderr = sys.stderr
-
-            def __enter__(self):
-                self.log_file_handle = open(self.log_file, 'a')
-                sys.stdout = self.log_file_handle
-                sys.stderr = self.log_file_handle
-
-            def __exit__(self, exc_type, exc_value, traceback):
-                sys.stdout = self.original_stdout
-                sys.stderr = self.original_stderr
-                self.log_file_handle.close()
         
         # Train the Masked Transformer
         if args.train_mask:
@@ -98,9 +91,9 @@ if __name__ == '__main__':
             if args.resume_training:
                 command.append('--is_continue')
             if not args.verbose:
-                with StreamRedirector(log_file_name):
+                with open(log_file_name, 'w') as f:
                     # Run the command in the specified working directory
-                    subprocess.run(command, cwd=working_dir)
+                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
             else:
                 subprocess.run(command, cwd=working_dir)
             
@@ -120,9 +113,9 @@ if __name__ == '__main__':
             if args.resume_training:
                 command.append('--is_continue')
             if not args.verbose:
-                with StreamRedirector(log_file_name):
+                with open(log_file_name, 'w') as f:
                     # Run the command in the specified working directory
-                    subprocess.run(command, cwd=working_dir)
+                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
             else:
                 subprocess.run(command, cwd=working_dir)
         
@@ -139,9 +132,9 @@ if __name__ == '__main__':
                 '--ext', 'evaluation'
             ]
             if not args.verbose:
-                with StreamRedirector(log_file_name):
+                with open(log_file_name, 'w') as f:
                     # Run the command in the specified working directory
-                    subprocess.run(command, cwd=working_dir)
+                    subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
             else:
                 subprocess.run(command, cwd=working_dir)
         
@@ -149,7 +142,6 @@ if __name__ == '__main__':
         if args.eval_single_samples:
             
             # exchange the original momask files with the ones in "adapted codes" for single sample evaluation
-            adapted_codes_folder = os.path.join(MOMASK_REPO_DIR, "adapted_codes")
             adapted_dataset_motion_loader = os.path.join(adapted_codes_folder, "dataset_motion_loader.py")
             adapted_eval_t2m = os.path.join(adapted_codes_folder, "eval_t2m.py")
             adapted_get_opt = os.path.join(adapted_codes_folder, "get_opt.py")
@@ -194,9 +186,9 @@ if __name__ == '__main__':
             ]
             try:
                 if not args.verbose:
-                    with StreamRedirector(log_file_name):
+                    with open(log_file_name, 'w') as f:
                         # Run the command in the specified working directory
-                        subprocess.run(command, cwd=working_dir)
+                        subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, cwd=working_dir)
                 else:
                     subprocess.run(command, cwd=working_dir)
             except Exception as e:
@@ -225,6 +217,10 @@ if __name__ == '__main__':
         # rename text folders back to their original names if prompt adaptation was performed
         os.rename(original_folder, args.texts_folder)
         os.rename(altered_original_folder, original_folder)
+        
+        # rename train_t2m_transformer.py back to original
+        os.rename(original_train_t2m, adapted_train_t2m)
+        os.rename(altered_original_train_t2m, original_train_t2m)
         
         logging.info("Finished with the following args:")
         logging.info(args)

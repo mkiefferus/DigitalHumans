@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 
-from utils import SESSION_ID, MOMASK_REPO_DIR, HUMAN_ML_DIR
+from utils import SESSION_ID, MOMASK_REPO_DIR, HUMAN_ML_DIR, EXTERNAL_REPOS_DIR
 from utils.logging import init_logging_old_python_version, end_logging
 
 def parse_args():
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     os.rename(args.texts_folder, original_folder)
     
     # folder for adapted codes to later exchange pythons scipts from:
-    adapted_codes_folder = os.path.join(MOMASK_REPO_DIR, "adapted_codes")
+    adapted_codes_folder = os.path.join(EXTERNAL_REPOS_DIR, "adapted_codes")
     
     # change train_t2m_transformer.py in Momask to avoid duplicated logging:
     original_train_t2m = os.path.join(MOMASK_REPO_DIR, "train_t2m_transformer.py")
@@ -100,15 +100,14 @@ if __name__ == '__main__':
         # Train the Residual Transformer
         if args.train_res:
             command = [
-                'python', 'eval_t2m_trans_res.py',
-                '--res_name', res_name,
-                '--dataset_name', 't2m',
-                '--name', mask_name,
+                'python', 'train_res_transformer.py',
+                '--name', res_name,
                 '--gpu_id', '0',
-                '--cond_scale', '4',
-                '--time_steps', '10',
-                '--ext', 'evaluation',
-                '--batch_size', '2'
+                '--dataset_name', 't2m',
+                '--batch_size', '64',
+                '--vq_name', rvq_name,
+                '--cond_drop_prob', '0.2',
+                '--share_weight'
             ]
             if args.resume_training:
                 command.append('--is_continue')

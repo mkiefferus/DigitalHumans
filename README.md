@@ -98,7 +98,7 @@ Note that we subsequently built a quality check stage to minimize the occurrence
 </table>
 
 
-## :gear: Setup
+## :gear: SETUP
 
 <details>
 
@@ -182,30 +182,75 @@ When working with OpenAI models (GPT3.5-turbo, GPT4o, ...):
 Please create an OPENAI API Token and export it as a global variable to your system. ```OPENAI_API_KEY = ".."```
 Follow the instructions given in _"Step 2 - Set up your API key for all projects (recommended)"_ in the [OpenAI API Documentation](https://platform.openai.com/docs/quickstart?context=python) to configure your OpenAI API access.
 
-## Usage
-### Motion Description Enhancement
+</details>
+
+## USAGE
+### Motion Description Refinement
 <details>
-To generate new motion descriptions for the test dataset of HumanML3D using GPT-3.5 Turbo, run the following:
 
-```
-.\prompt_enhancement_models\text_refinement.py --system_prompt extra_sentence.json --folder_name extra_sentence_1 -r
-```
-* `--folder_name` : (optional) Specifies output folder name (generated automatically if not given: "altered_text_" + current timestamp at `prompt_enhancement/altered_texts/`)
-* `--system_prompt` : Name of JSON file with correct system prompt
-* `--batch_size` : Batch size for text enhancement (default: 1) (-1 will treat each line in each samples as new input to the language model. This increases output quality but may hit hard request limits per day.)
-* `--continue_previous` : Path to folder where refining should be continued (skips already refined samples)
-* `--refine_all_samples` : Refine all samples (default: refine test samples only)
-* `--early_stop` : Stop after n refined batches (for testing)
-* `--from_config` : Parameters in config file will overwrite respective args counterparts
-* `-r` : Replace generated samples with original ones if do not match quality expectation
-* `-d` : Delete generated samples with original ones if do not match quality expectation (inferior priority to `-r`)
+Use the `text_enhance.py` script to refine motion descriptions. This script provides 3 options:
+1. Simple quality control
+    ```
+    python text_enhance.py --quality_control_only --system_prompt path/to/system/prompt -r
+    ```
+2. Prompt enhancement by similarity search in original dataset (see report)
+    ```
+    python text_enhance.py --prompt_adaptation --system_prompt path/to/system/prompt -r
+    ```
+3. Text refinement using LLMs
+    ```
+    python text_enhance.py -pa -sp path/to/system/prompt -r 
+    ```
 
+#### Additional Useful Flags
 
-*(Outdated) Note that this script requires the HumanML3D dataset to be present in `external_repos\momask-codes\dataset`. Furthermore, it currently always concatenates the GPT-3.5 output to the original motion description. This can be easily changed by adapting the return statement of the `improved_prompt` function inside `text_refinement.py`.*
+* `-v` : verbose
+* `-s` : early stopping - stop refinement after x steps for testing purposes
+
+Text Refinement
+* `--continue_previous path/to/previous/folder` : continue refinement in folder
+* `--refine_all_samples` : refine whole dataset, not only test-set (default)
+* `--use_example path/to/example/json` : add additional context with assistant and user prompt
+* `--use_cross_sample_information` : treat sample text file as one motion (ignores batch size)
+* `--use_llama` : use llama instead of GPT3.5-turbo (default). Requires to also provide `--llama_key <key>`
+* `--batch_size` : use file batching to speed up refinement (not recommended, leads to less detailed information and more inconsistency)
+
+Quality control
+* `-r` or `-d` : replace with original or delete refined files if they do not meet the quality control
+</details>
+
+### Train And Evaluate Your Own Model
+<details>
+
+Use the `t2m_train_eval.py` script to manage the evaluation and training of different text-to-motion models. The script provides various options for training specific models, resuming training, and evaluating models.
+
+1. Train Masked Transformer Model end-to-end
+    ```
+    python t2m_train_eval.py --train_mask --texts_folder_name path/to/texts/folder
+    ```
+2. Train Residual Transformer Model end-to-end
+    ```
+    python t2m_train_eval.py --train_res --texts_folder_name path/to/texts/folder
+    ```
+3. Evaluate All Metrics
+    ```
+    python t2m_train_eval.py --eval_all_metrics --texts_folder_name path/to/texts/folder
+    ```
+4. Evaluate Single Samples
+    ```
+    python t2m_train_eval.py --eval_single_samples --texts_folder_name path/to/texts/folder
+    ```
+
+#### Additional Useful Flags
+
+* `-v`, `--verbose` : Output information to the console (True) or the logfile (False).
+* `-r`, `--resume_training` : Resume training that was stopped before.
+* `--res_name` : Specify the Residual Transformer model to evaluate. Defaults to the original MoMask model.
+* `--mask_name` : Specify the Masked Transformer model to evaluate. Defaults to the original MoMask model.
 
 </details>
 
-## Contributors
+## CONTRIBUTORS
 - Anne Marx
 - Axel Wagner
 - Max Kieffer

@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument("--llama_key", type=str, default="ollama", help="Key for the llama model")
     
     # below args are for quality control
-    parser.add_argument("-r", "--replace", action="store_true", help="Replace '#No annotation' with '#0.0#0.0'.")
+    parser.add_argument("-r", "--replace", action="store_true", help="Replace refined files with original ones if fail quality check.")
     parser.add_argument("-d", "--delete", action="store_true", help="Delete faulty files.")
     parser.add_argument("-t", action="store_true", help="For the test set, copy original file if it doesn't exist and compare/adjust the flags of the first entry.")
     args = parser.parse_args()

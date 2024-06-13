@@ -186,7 +186,10 @@ Follow the instructions given in _"Step 2 - Set up your API key for all projects
 
 
 ## Motion Description Refinement
+
 <details>
+
+*Remember to switch to our environment for text refinement*
 
 Use the `text_enhance.py` script to refine motion descriptions. This script provides 3 options:
 1. Simple quality control
@@ -217,10 +220,14 @@ Text Refinement
 
 Quality control
 * `-r` or `-d` : replace with original or delete refined files if they do not meet the quality control
+
 </details>
 
 ## Train And Evaluate Your Own Model
+
 <details>
+
+*Remember to switch to the MoMask environment for training*
 
 Use the `t2m_train_eval.py` script to manage the evaluation and training of different text-to-motion models. The script provides various options for training specific models, resuming training, and evaluating models.
 
@@ -251,7 +258,10 @@ Use the `t2m_train_eval.py` script to manage the evaluation and training of diff
 </details>
 
 ## Results Analysis
+
 <details>
+
+*Remember to switch to our environment for results analysis*
 
 This repo also provides analysis scripts for post-processing under `result_analysis`. 
 

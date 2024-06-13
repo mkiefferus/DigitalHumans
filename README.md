@@ -98,10 +98,72 @@ Note that we subsequently built a quality check stage to minimize the occurrence
 </table>
 
 
-## Setup
-### Installing neccessary libraries
-#### Text Enhancement
-In order to run the text enhancement scripts and generate enhanced text descriptions, you will need to install the following python packages:
+## :gear: Setup
+
+<details>
+
+### Clone Repo
+
+This repo relies on submodules ([MoMask](https://github.com/EricGuo5513/momask-codes)). Pull the whole repo with
+```
+git clone --recurse-submodules https://github.com/mkiefferus/DigitalHumans
+```
+External repos are found in the folder `external_repos`
+
+### Setup MoMask Repo
+<details>
+
+*Disclaimer*: this section is the original setup-section from [MoMask](https://github.com/EricGuo5513/momask-codes). Please follow the link for further details.
+
+### 1. Conda Environment
+```
+conda env create -f environment.yml
+conda activate momask
+pip install git+https://github.com/openai/CLIP.git
+```
+We test our code on Python 3.7.13 and PyTorch 1.7.1
+
+#### Alternative: Pip Installation
+<details>
+We provide an alternative pip installation in case you encounter difficulties setting up the conda environment.
+
+```
+pip install -r requirements.txt
+```
+We test this installation on Python 3.10
+
+</details>
+
+### 2. Models and Dependencies
+
+#### Download Pre-trained Models
+```
+bash prepare/download_models.sh
+```
+
+#### Download Evaluation Models and Gloves
+For evaluation only.
+```
+bash prepare/download_evaluator.sh
+bash prepare/download_glove.sh
+```
+
+#### Troubleshooting
+To address the download error related to gdown: "Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses". A potential solution is to run `pip install --upgrade --no-cache-dir gdown`, as suggested on https://github.com/wkentaro/gdown/issues/43. This should help resolve the issue.
+
+#### (Optional) Download Manually
+Visit [[Google Drive]](https://drive.google.com/drive/folders/1b3GnAbERH8jAoO5mdWgZhyxHB73n23sK?usp=drive_link) to download the models and evaluators mannually.
+
+### 3. Get Data
+
+Follow the original [MoMask](https://github.com/EricGuo5513/momask-codes) repo to assemble the HumanML3D dataset.
+
+</details>
+
+
+### Setup Environment
+Make sure to properly setup a separate environment with the `requirements.txt` file.
+In case of any problems, these are the most important packages:
 - spacy
 - torch
 - tqdm
@@ -112,19 +174,12 @@ Furthermore, you will need to download the ```en_core_web_sm``` model:
 python -m spacy download en_core_web_sm
 ```
 
+### Setup API Token
+
+This project relies on LLMs for text refinement. Accessing these LLMs is done via the OpenAI client. When working with local language models, skip this part. 
+
+When working with OpenAI models (GPT3.5-turbo, GPT4o, ...):
 Please create an OPENAI API Token and export it as a global variable to your system. ```OPENAI_API_KEY = ".."```
-
-### Integrating External Repositories
-#### MoMask
-Clone the [MoMask Repository](https://github.com/EricGuo5513/momask-codes) into the folder ```DigitalHumans/external_repos``` and follow their instruction to download datasets and models.
-
-Tip: the `setup.sh` file automatically sets up the momask-repo. Run 
-```
-zsh setup.sh
-```
-(or bash instead of zsh). What remains to do is to add the HumanML3D dataset into the dataset folder.
-
-### OpenAI API Setup
 Follow the instructions given in _"Step 2 - Set up your API key for all projects (recommended)"_ in the [OpenAI API Documentation](https://platform.openai.com/docs/quickstart?context=python) to configure your OpenAI API access.
 
 ## Usage

@@ -98,7 +98,7 @@ Note that we subsequently built a quality check stage to minimize the occurrence
 </table>
 
 
-## :gear: SETUP
+## SETUP
 
 <details>
 

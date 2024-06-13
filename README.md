@@ -14,7 +14,26 @@ Note that we subsequently built a quality check stage to minimize the occurrence
 | person is performing a golf motion | person is performing a golf motion | Imitating a golf swing, the person assumes a stance and clasps their hand together in a golf grip, leans forward to simulate a put motion that swings from left to right. |
 |![Circle GT](./media/circle_GT.gif)|![Circle Unrefined](./media/circle_unrefined.gif)| ![Circle Refined](./media/circle_refined.gif)|
 | a person slowly walks in a counter clockwise circle | a person slowly walks in a counter clockwise circle | The person's arms are relaxed and swing gently with each step. | -->
-<table>
+
+<style>
+  .custom-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .custom-table th, .custom-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .custom-table p {
+    max-width: 300px;
+    margin: auto;
+    word-wrap: break-word;
+  }
+</style>
+
+<table class="custom-table">
   <tr>
     <th>Ground Truth</th>
     <th>Unrefined (MoMask)</th>
@@ -77,6 +96,7 @@ Note that we subsequently built a quality check stage to minimize the occurrence
     </td>
   </tr>
 </table>
+
 
 ## Setup
 ### Installing neccessary libraries

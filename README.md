@@ -320,7 +320,7 @@ Adjust the `original` and `altered` variables, providing the paths to the two da
 
 
 ## CONTRIBUTORS
-- Anne Marx
-- Axel Wagner
-- Max Kieffer
-- Michael Siebenmann
+- [Anne Marx](https://github.com/An-nay-marks)
+- [Axel Wagner](https://github.com/Axel2017)
+- [Max Kieffer](https://github.com/mkiefferus)
+- [Michael Siebenmann](https://github.com/TheSiebi)

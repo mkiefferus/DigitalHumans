@@ -4,95 +4,67 @@
 Our approach can enhance output motion quality by adding contextually relevant text signals or by translating high-level motion descriptions to a set of low-level motion descriptions.
 In the following, we show 3 examples for qualitative improvements of the generated motion and one example for a degradation, where the LLM omitted important information.
 Note that we subsequently built a quality check stage to minimize the occurrence of such refinement failures.
-<!-- |Ground Truth|Unrefined (MoMask)|Refined (Ours)|
-|:-:|:-:|:-:|
-|![Broadjump GT](./media/broadjump_GT.gif)|![Broadjump Unrefined](./media/broadjump_unrefined.gif)| ![Broadjump Refined](./media/broadjump_refined.gif)|
-| a person performs a typical broadjump | a person performs a typical broadjump | The person bends their arms and crouches down preparing for a jump, then extend their arms back as they propel themselves forward with their legs. |
-|![Pitch GT](./media/pitch_GT.gif)|![Pitch Unrefined](./media/pitch_unrefined.gif)| ![Pitch Refined](./media/pitch_refined.gif)|
-| a figure winds up for the pitch | a figure winds up for the pitch |The figure pulls back their arms in preparation for throwing something. |
-|![Golf GT](./media/golf_GT.gif)|![Golf Unrefined](./media/golf_unrefined.gif)| ![Golf Refined](./media/golf_refined.gif)|
-| person is performing a golf motion | person is performing a golf motion | Imitating a golf swing, the person assumes a stance and clasps their hand together in a golf grip, leans forward to simulate a put motion that swings from left to right. |
-|![Circle GT](./media/circle_GT.gif)|![Circle Unrefined](./media/circle_unrefined.gif)| ![Circle Refined](./media/circle_refined.gif)|
-| a person slowly walks in a counter clockwise circle | a person slowly walks in a counter clockwise circle | The person's arms are relaxed and swing gently with each step. | -->
 
-<style>
-  .custom-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .custom-table th, .custom-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-    vertical-align: middle;
-  }
-  .custom-table p {
-    max-width: 300px;
-    margin: auto;
-    word-wrap: break-word;
-  }
-</style>
-
-<table class="custom-table">
+<table style="width: 100%; border-collapse: collapse;">
   <tr>
-    <th>Ground Truth</th>
-    <th>Unrefined (MoMask)</th>
-    <th>Refined (Ours)</th>
+    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Ground Truth</th>
+    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Unrefined (MoMask)</th>
+    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Refined (Ours)</th>
   </tr>
   <tr>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/broadjump_GT.gif" width="200" height="200" alt="Broadjump GT" />
-      <p>a person performs a typical broadjump</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a person performs a typical broadjump</p>
     </td>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/broadjump_unrefined.gif" width="200" height="200" alt="Broadjump Unrefined" />
-      <p>a person performs a typical broadjump</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a person performs a typical broadjump</p>
     </td>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/broadjump_refined.gif" width="200" height="200" alt="Broadjump Refined" />
-      <p>The person bends their arms and crouches down preparing for a jump, then extend their arms back as they propel themselves forward with their legs.</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">The person bends their arms and crouches down preparing for a jump, then extend their arms back as they propel themselves forward with their legs.</p>
     </td>
   </tr>
   <tr>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/pitch_GT.gif" width="200" height="200" alt="Pitch GT" />
-      <p>a figure winds up for the pitch</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a figure winds up for the pitch</p>
     </td>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/pitch_unrefined.gif" width="200" height="200" alt="Pitch Unrefined" />
-      <p>a figure winds up for the pitch</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a figure winds up for the pitch</p>
     </td>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/pitch_refined.gif" width="200" height="200" alt="Pitch Refined" />
-      <p>The figure pulls back their arms in preparation for throwing something.</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">The figure pulls back their arms in preparation for throwing something.</p>
     </td>
   </tr>
   <tr>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/golf_GT.gif" width="200" height="200" alt="Golf GT" />
-      <p>person is performing a golf motion</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">person is performing a golf motion</p>
     </td>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/golf_unrefined.gif" width="200" height="200" alt="Golf Unrefined" />
-      <p>person is performing a golf motion</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">person is performing a golf motion</p>
     </td>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/golf_refined.gif" width="200" height="200" alt="Golf Refined" />
-      <p>Imitating a golf swing, the person assumes a stance and clasps their hand together in a golf grip, leans forward to simulate a put motion that swings from left to right.</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">Imitating a golf swing, the person assumes a stance and clasps their hand together in a golf grip, leans forward to simulate a put motion that swings from left to right.</p>
     </td>
   </tr>
   <tr>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/circle_GT.gif" width="200" height="200" alt="Circle GT" />
-      <p>a person slowly walks in a counter clockwise circle</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a person slowly walks in a counter clockwise circle</p>
     </td>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/circle_unrefined.gif" width="200" height="200" alt="Circle Unrefined" />
-      <p>a person slowly walks in a counter clockwise circle</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a person slowly walks in a counter clockwise circle</p>
     </td>
-    <td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
       <img src="./media/circle_refined.gif" width="200" height="200" alt="Circle Refined" />
-      <p>The person's arms are relaxed and swing gently with each step.</p>
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">The person's arms are relaxed and swing gently with each step.</p>
     </td>
   </tr>
 </table>

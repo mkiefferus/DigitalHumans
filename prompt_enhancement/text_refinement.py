@@ -36,23 +36,6 @@ def _continue_folder(continue_folder_path:str, data_folder_path:str, refine_spec
 
     return remaining_files
 
-def _annotate_motion(motion, nlp):
-    """Add part of speech tags to motion description."""
-    motion = motion.replace('-', '')
-    doc = nlp(motion)
-    word_list = []
-    pos_list = []
-    for token in doc:
-        word = token.text
-        if not word.isalpha():
-            continue
-        if (token.pos_ == 'NOUN' or token.pos_ == 'VERB') and (word != 'left'):
-            word_list.append(token.lemma_)
-        else:
-            word_list.append(word)
-        pos_list.append(token.pos_)
-    return word_list, pos_list
-
 def export_data(data:json, annotations_dict, output_folder:str):
     """Generate dataset with refined text"""
     
@@ -73,11 +56,7 @@ def export_data(data:json, annotations_dict, output_folder:str):
         with open(altered_text_path, 'w') as altered_file:
             
             for motion_key, content in motions.items():
-                # print(motion_key)
-                # print(content)
                 annotation = annotations_dict[file_name][motion_key] if motion_key in annotations_dict[file_name] else '0.0#0.0'
-                # print(annotation)
-                # print("")
                 
                 # Add part of speech tags to motion description
                 doc = nlp(content)
@@ -223,10 +202,7 @@ def get_text_refinement(data, system_prompt:str, example_prompt, model:str, clie
     )
     
     refined_text = new_prompt.choices[0].message.content
-    # print(data)
-    # print(refined_text)
-    # print("")
-    
+
     if BATCH_PROCESSING or use_cross_sample_information:
         # Cut everything before the first '{' and after the last '}'
         refined_text = refined_text[refined_text.find('{'):refined_text.rfind('}')+1]

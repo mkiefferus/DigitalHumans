@@ -184,8 +184,8 @@ Follow the instructions given in _"Step 2 - Set up your API key for all projects
 
 </details>
 
-## USAGE
-### Motion Description Refinement
+
+## Motion Description Refinement
 <details>
 
 Use the `text_enhance.py` script to refine motion descriptions. This script provides 3 options:
@@ -219,7 +219,7 @@ Quality control
 * `-r` or `-d` : replace with original or delete refined files if they do not meet the quality control
 </details>
 
-### Train And Evaluate Your Own Model
+## Train And Evaluate Your Own Model
 <details>
 
 Use the `t2m_train_eval.py` script to manage the evaluation and training of different text-to-motion models. The script provides various options for training specific models, resuming training, and evaluating models.
@@ -241,7 +241,7 @@ Use the `t2m_train_eval.py` script to manage the evaluation and training of diff
     python t2m_train_eval.py --eval_single_samples --texts_folder_name path/to/texts/folder
     ```
 
-#### Additional Useful Flags
+### Additional Useful Flags
 
 * `-v`, `--verbose` : Output information to the console (True) or the logfile (False).
 * `-r`, `--resume_training` : Resume training that was stopped before.
@@ -249,6 +249,65 @@ Use the `t2m_train_eval.py` script to manage the evaluation and training of diff
 * `--mask_name` : Specify the Masked Transformer model to evaluate. Defaults to the original MoMask model.
 
 </details>
+
+## Results Analysis
+<details>
+
+This repo also provides analysis scripts for post-processing under `result_analysis`. 
+
+*Disclaimer* These scripts are not part of the original pipeline and were used to identify trends to further optimise the text refinement and training. They are guidelines and are no final products.
+
+### BART Classifier
+
+`BART_text_classifier.ipynb` leverages the [bart-large-mnli](https://huggingface.co/facebook/bart-large-mnli) model for zero-shot-classification. 
+
+The `candidate_labels` variable holds a list with labels. The default confidence threshold is set to `THRESHOLD = 0.87`
+
+Provide the link to the text samples folder unter `test_txt_path`. 
+
+This is a multiclass classifier. It will label the data with the provided labels.
+
+This script has the option to output the results to text files for further processing.
+
+
+
+### Key-word Classifier
+
+`filter_test_dataset.ipynb` filters test data based on keywords rather than using a classifier to label the test data. It currently tries to identify high level motion descriptions but also contains extensions to identify emotions, adjectives and limbs.
+
+Adjust the `PROJECT_ROO_DIR` and the path variables.
+
+This script has the option to output the results to text files for further processing.
+
+
+### Semantic Analysis
+
+Refined texts produced by LLMs often include semantic errors (hallucinated information, removal of relevant information). `semantic_check.py` aims to find these mistakes and filter them out.
+
+An LLM (default: llama3) is fed the original motion description and the refined description and asked if the texts are roughly equivalent.
+
+Use 
+```
+python result_analysis/semantic_check.py --data path/to/texts/folder -r
+```
+
+#### Additional Useful Flags
+
+* `--model` : define model to be used (supports 'llama3' and 'gpt-3.5-turbo')
+* `-r` : replace faulty prompt refinements with original texts
+* `-v` : verbose
+
+### Score Trend Analysis
+
+`single_sample_score_analysis.ipynb` compares the performance of the original text files vs the performance of the refined text files.
+
+It also shows the top 10 improved motion descriptions and the top 10 degradations with respect to the original data.
+
+Adjust the `original` and `altered` variables, providing the paths to the two datasets respectively. 
+
+</details>
+
+
 
 ## CONTRIBUTORS
 - Anne Marx

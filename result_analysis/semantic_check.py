@@ -153,6 +153,8 @@ if __name__ == "__main__":
         )
     elif (args.model == "gpt-3.5-turbo"):
         print("Using GPT-3.5 Turbo model for checking similarity")
+    else:
+        raise Warning("Invalid model name, choose either llama3 or gpt-3.5-turbo")
 
 
     check_dataset_semantics(args.data, args.r, client, args.model, args.v)

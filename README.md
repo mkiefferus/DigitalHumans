@@ -217,6 +217,8 @@ Quality control
 
 Use the `t2m_train_eval.py` script to manage the evaluation and training of different text-to-motion models. The script provides various options for training specific models, resuming training, and evaluating models.
 
+Find our pretrained MoMask models [here](https://polybox.ethz.ch/index.php/s/4HYSa8muWpa1w0H).
+
 1. Train Masked Transformer Model end-to-end
     ```
     python t2m_train_eval.py --train_mask --texts_folder_name path/to/texts/folder

@@ -219,21 +219,21 @@ Use the `text_enhance.py` script to refine motion descriptions.
 Specify the system prompt (to be found in the folder 'prompts') by its filename. Here are some example commands:
 1. Text refinement using GPT-3.5 Turbo for the first 10 text files, here with the limb-specific refinement strategy
     ```
-    python text_enhance.py -sp limb_specific_v4 --use_example -r -v -s 10
+    python text_enhance.py --system_prompt limb_specific_v4 --use_example -r --verbose --early_stopping 10
     ```
 2. Prompt enhancement by similarity search for the first 10 text files
     ```
-    python text_enhance.py --prompt_adaptation similarity -r -v -s 10
+    python text_enhance.py --prompt_adaptation similarity -r --verbose --early_stopping 10
     ```
 
 #### Additional Useful Flags
 
-* `--verbose, -v` : verbose
-* `--early_stopping, -s` : early stopping - stop refinement after x steps for testing purposes
+* `-v, --verbose` : verbose
+* `-s, --early_stopping` : early stopping - stop refinement after x steps for testing purposes
 
 Text Refinement
-* `--prompt_adaptation, -pa`: available options: similarity, regular
-* `--system_prompt, -sp`: name of the system prompt to be given to the prompt adaptation model, see folder 'prompts' for options
+* `-pa, --prompt_adaptation`: available options: similarity, regular
+* `-sp, --system_prompt`: name of the system prompt to be given to the prompt adaptation model, see folder 'prompts' for options
 * `--continue_previous`: continue refining texts from a specific folder
 * `--refine_all_samples`: refine whole dataset, not only test-set (default)
 * `--use_example`: add additional context with assistant/user example pairs

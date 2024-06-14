@@ -69,6 +69,34 @@ Note that we subsequently built a quality check stage to minimize the occurrence
   </tr>
 </table>
 
+Our approach can also enhance motion output quality for high-level motions not contained in the HumanML3D training data by utilizing the additional world knowledge of LLMs.
+
+<table style="width: 100%; border-collapse: collapse;">
+  <tr>
+    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Unrefined (MoMask)</th>
+    <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Refined (Ours)</th>
+  </tr>
+  <tr>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
+      <img src="./media/floss_unrefined.gif" width="250" height="200" alt="Floss Unrefined" />
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">A man does the floss dance.</p>
+    </td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
+      <img src="./media/floss_refined.gif" width="250" height="200" alt="Floss Refined" />
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">A man moves his arms in parallel and always sideways in an alternating motion so that one arm is always behind and one in front of his body. The hands are always at hip level and his hips move in sync with his arms.</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
+      <img src="./media/running_man_unrefined.gif" width="250" height="200" alt="Running Man Unrefined" />
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">A person does the running man dance.</p>
+    </td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
+      <img src="./media/running_man_refined.gif" width="250" height="200" alt="Running Man Refined" />
+      <p style="max-width: 300px; margin: auto; word-wrap: break-word;">A person imitates slowly running in place with a very rhythmic motion. The head bumps in sync with the feet and the arms are supporting the running motion.</p>
+    </td>
+  </tr>
+</table>
 
 ## Setup
 

@@ -1,0 +1,15 @@
+name: enhance
+channels:
+  - conda-forge
+  - defaults
+  - pytorch
+dependencies:
+  - python=3.12
+  - numpy
+  - pandas
+  - openai
+  - pytorch
+  - spacy
+  - scikit-learn
+  - pip:
+    - git+https://github.com/openai/CLIP.git

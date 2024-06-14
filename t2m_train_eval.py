@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument('-t', '--eval_all_metrics', action="store_true", required=False,
                         help="Whether to evaluate the model on all samples in total to get all metrics.")
     parser.add_argument('--eval_single_samples', action="store_true", required=False,
-                        help="Whether to generate a multimodal distance scores for each sample in the dataset.")
+                        help="Whether to generate a multimodal distance score for each sample in the dataset.")
     parser.add_argument('-v', '--verbose', action="store_true", required=False,
                         help="Whether to output information into the console (True) or the logfile (False).")
     parser.add_argument('-r', '--resume_training',  action="store_true", required=False,

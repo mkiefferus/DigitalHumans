@@ -336,12 +336,6 @@ def main(args):
 
     # Set modelname to default if not specified
     model = getattr(args, 'model', 'gpt-3.5-turbo')
-        
-    # Load example prompt for model assistant and user
-    if args.use_example:
-        with open(os.path.join(args.ROOT_DIR, "prompts_examples" ,f"ex_{args.system_prompt}"), 'r') as file:
-            example_prompt = json.load(file)
-    else: example_prompt = None
 
     # Load system prompt
     if args.system_prompt[-5:] != ".json":
@@ -349,6 +343,12 @@ def main(args):
     system_prompt_path = os.path.join(args.ROOT_DIR, "prompts", args.system_prompt)
     with open(system_prompt_path, 'r') as file:
         system_prompt = json.load(file).get('system_prompt')
+        
+    # Load example prompt for model assistant and user
+    if args.use_example:
+        with open(os.path.join(args.ROOT_DIR, "prompts_examples" ,f"ex_{args.system_prompt}"), 'r') as file:
+            example_prompt = json.load(file)
+    else: example_prompt = None
 
     # set refinement option to None if not specified
     if not args.refine_all_samples:

@@ -195,18 +195,19 @@ Follow the instructions given in _"Step 2 - Set up your API key for all projects
 *Remember to switch to our environment for text refinement*
 ```conda activate enhance```
 
-Use the `text_enhance.py` script to refine motion descriptions. This script provides 3 options:
+Use the `text_enhance.py` script to refine motion descriptions. 
+Specify the system prompt (to be found in the folder 'prompts') by its filename. This script provides 3 options:
 1. Simple quality control
     ```
-    python text_enhance.py --quality_control_only --system_prompt path/to/system/prompt -r
+    python text_enhance.py --quality_control_only --system_prompt file_name -r
     ```
 2. Prompt enhancement by similarity search in original dataset (see report)
     ```
-    python text_enhance.py --prompt_adaptation regular --system_prompt path/to/system/prompt -r
+    python text_enhance.py --prompt_adaptation regular --system_prompt file_name -r
     ```
 3. Text refinement using LLMs
     ```
-    python text_enhance.py -pa -sp path/to/system/prompt -r 
+    python text_enhance.py -pa -sp file_name -r 
     ```
 
 #### Additional Useful Flags

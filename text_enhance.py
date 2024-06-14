@@ -29,7 +29,7 @@ def parse_args():
                         help="Whether to stop the refinement after x steps for testing purposes.")
     
     # below args are only necessary for regular enhancement, not similarity search
-    parser.add_argument("--batch_size", type=int, default=1, help="If larger than 1, the model will process multiple files at once.")
+    parser.add_argument("--batch_size", type=int, default=-1, help="How many files at once the model will process, -1 by default for single text description processing")
     parser.add_argument("--continue_previous", type=str, default=None, help="Continue refining texts from a specific folder")
     parser.add_argument("--refine_all_samples", action="store_true", required=False, help="Refine all samples. Default: refine test samples only")
     parser.add_argument("--samples_text_file", type=str, default="test.txt", help="Text file specifying samples to refine. Default: test.txt")

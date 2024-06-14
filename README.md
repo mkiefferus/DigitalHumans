@@ -202,7 +202,7 @@ Use the `text_enhance.py` script to refine motion descriptions. This script prov
     ```
 2. Prompt enhancement by similarity search in original dataset (see report)
     ```
-    python text_enhance.py --prompt_adaptation --system_prompt path/to/system/prompt -r
+    python text_enhance.py --prompt_adaptation regular --system_prompt path/to/system/prompt -r
     ```
 3. Text refinement using LLMs
     ```
@@ -215,6 +215,7 @@ Use the `text_enhance.py` script to refine motion descriptions. This script prov
 * `-s` : early stopping - stop refinement after x steps for testing purposes
 
 Text Refinement
+* `--prompt_adaptation_regular` : prompt adaptation technique: similarity, regular
 * `--continue_previous folder` : continue refinement in folder
 * `--refine_all_samples` : refine whole dataset, not only test-set (default)
 * `--use_example examplejson` : add additional context with assistant and user prompt

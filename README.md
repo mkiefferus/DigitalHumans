@@ -199,7 +199,7 @@ Use the `text_enhance.py` script to refine motion descriptions.
 Specify the system prompt (to be found in the folder 'prompts') by its filename. This script provides 3 options:
 1. Simple quality control
     ```
-    python text_enhance.py --quality_control_only --system_prompt file_name -r
+    python text_enhance.py --quality_control_only --system_prompt file_name -r --continue_previous path/to/previous/folder
     ```
 2. Prompt enhancement by similarity search in original dataset (see report)
     ```

@@ -5,6 +5,7 @@ channels:
   - pytorch
 dependencies:
   - python=3.12
+  - pip
   - numpy
   - pandas
   - openai

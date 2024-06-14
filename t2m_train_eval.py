@@ -57,6 +57,8 @@ if __name__ == '__main__':
     args.texts_folder = os.path.join(HUMAN_ML_DIR, args.texts_folder_name)
     altered_original_folder = os.path.join(HUMAN_ML_DIR, "texts_original")
     original_folder = os.path.join(HUMAN_ML_DIR, "texts")
+    if not os.path.exists(args.texts_folder):
+       raise Exception(f"The specified texts folder does not exist. Make sure it is in the correct location. {args.texts_folder}") 
     os.rename(original_folder, altered_original_folder)
     os.rename(args.texts_folder, original_folder)
     

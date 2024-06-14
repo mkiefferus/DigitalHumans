@@ -3,12 +3,7 @@ import os
 import spacy
 import json
 from tqdm import tqdm
-import torch
 import sys
-import argparse
-from datetime import datetime
-import numpy as np
-import yaml
 
 # Note: This allows us to work with relative paths, but assumes that the script position in the repo remains the same!
 os.chdir(sys.path[0])

@@ -11,5 +11,10 @@ dependencies:
   - pytorch
   - spacy
   - scikit-learn
+  - tqdm
+  - jupyter
+  - ipykernel
+  - transformers
   - pip:
     - git+https://github.com/openai/CLIP.git
+    - git+https://github.com/huggingface/transformers

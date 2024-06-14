@@ -1,5 +1,4 @@
 import os
-import shutil
 import argparse
 from tqdm import tqdm
 from openai import OpenAI

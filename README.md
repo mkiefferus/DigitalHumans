@@ -198,7 +198,7 @@ Follow the instructions given in _"Step 2 - Set up your API key for all projects
 Use the `text_enhance.py` script to refine motion descriptions. This script provides 3 options:
 1. Simple quality control
     ```
-    python text_enhance.py --quality_control_only --system_prompt path/to/system/prompt -r
+    python text_enhance.py --quality_control_only --system_prompt name/of/system/prompt/in/prompts/folder --continue_previous path/to/previous/folder -r
     ```
 2. Prompt enhancement by similarity search in original dataset (see report)
     ```

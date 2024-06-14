@@ -13,64 +13,64 @@ Note that we subsequently built a quality check stage to minimize the occurrence
   </tr>
   <tr>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/broadjump_GT.gif" width="200" height="200" alt="Broadjump GT" />
+      <img src="./media/broadjump_GT.gif" width="250" height="200" alt="Broadjump GT" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a person performs a typical broadjump</p>
     </td>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/broadjump_unrefined.gif" width="200" height="200" alt="Broadjump Unrefined" />
+      <img src="./media/broadjump_unrefined.gif" width="250" height="200" alt="Broadjump Unrefined" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a person performs a typical broadjump</p>
     </td>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/broadjump_refined.gif" width="200" height="200" alt="Broadjump Refined" />
+      <img src="./media/broadjump_refined.gif" width="250" height="200" alt="Broadjump Refined" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">The person bends their arms and crouches down preparing for a jump, then extend their arms back as they propel themselves forward with their legs.</p>
     </td>
   </tr>
   <tr>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/pitch_GT.gif" width="200" height="200" alt="Pitch GT" />
+      <img src="./media/pitch_GT.gif" width="250" height="200" alt="Pitch GT" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a figure winds up for the pitch</p>
     </td>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/pitch_unrefined.gif" width="200" height="200" alt="Pitch Unrefined" />
+      <img src="./media/pitch_unrefined.gif" width="250" height="200" alt="Pitch Unrefined" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a figure winds up for the pitch</p>
     </td>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/pitch_refined.gif" width="200" height="200" alt="Pitch Refined" />
+      <img src="./media/pitch_refined.gif" width="250" height="200" alt="Pitch Refined" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">The figure pulls back their arms in preparation for throwing something.</p>
     </td>
   </tr>
   <tr>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/golf_GT.gif" width="200" height="200" alt="Golf GT" />
+      <img src="./media/golf_GT.gif" width="250" height="200" alt="Golf GT" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">person is performing a golf motion</p>
     </td>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/golf_unrefined.gif" width="200" height="200" alt="Golf Unrefined" />
+      <img src="./media/golf_unrefined.gif" width="250" height="200" alt="Golf Unrefined" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">person is performing a golf motion</p>
     </td>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/golf_refined.gif" width="200" height="200" alt="Golf Refined" />
+      <img src="./media/golf_refined.gif" width="250" height="200" alt="Golf Refined" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">Imitating a golf swing, the person assumes a stance and clasps their hand together in a golf grip, leans forward to simulate a put motion that swings from left to right.</p>
     </td>
   </tr>
   <tr>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/circle_GT.gif" width="200" height="200" alt="Circle GT" />
+      <img src="./media/circle_GT.gif" width="250" height="200" alt="Circle GT" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a person slowly walks in a counter clockwise circle</p>
     </td>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/circle_unrefined.gif" width="200" height="200" alt="Circle Unrefined" />
+      <img src="./media/circle_unrefined.gif" width="250" height="200" alt="Circle Unrefined" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">a person slowly walks in a counter clockwise circle</p>
     </td>
     <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
-      <img src="./media/circle_refined.gif" width="200" height="200" alt="Circle Refined" />
+      <img src="./media/circle_refined.gif" width="250" height="200" alt="Circle Refined" />
       <p style="max-width: 300px; margin: auto; word-wrap: break-word;">The person's arms are relaxed and swing gently with each step.</p>
     </td>
   </tr>
 </table>
 
 
-## SETUP
+## Setup
 
 <details>
 
@@ -237,6 +237,8 @@ Quality control
 Use the `t2m_train_eval.py` script to manage the evaluation and training of different text-to-motion models. The script provides various options for training specific models, resuming training, and evaluating models.
 The text folder you specify with texts_folder_name should be located in 'external_repos/momask-codes/data/t2m'.
 
+Find our pretrained MoMask models [here](https://polybox.ethz.ch/index.php/s/4HYSa8muWpa1w0H).
+
 1. Train Masked Transformer Model end-to-end
     ```
     python t2m_train_eval.py --train_mask --texts_folder_name folder_name
@@ -265,6 +267,15 @@ The model folders should all be located in 'external_repos/momask-codes/checkpoi
 
 </details>
 
+## Visualization
+
+<details>
+
+To render SMPL animations and images in our paper, we used the [MotionGPT repository](https://github.com/OpenMotionLab/MotionGPT/tree/main).
+In the visualization section of their README, they detail the necessary steps to set up a pipeline that can first fit SMPL meshes from NPY files produced by MoMask and subsequently produce animations using Blender.
+
+</details>
+
 ## Results Analysis
 
 <details>
@@ -274,7 +285,7 @@ The model folders should all be located in 'external_repos/momask-codes/checkpoi
 
 This repo provides analysis scripts for post-processing under `result_analysis`. 
 
-*Disclaimer* These scripts are not part of the original pipeline and were used to identify trends to further optimise the text refinement and training. They are guidelines and are no final products.
+*Disclaimer* These scripts are not part of the original pipeline and were solely used to identify trends to optimise the text refinement and training further.
 
 ### BART Classifier
 

@@ -128,7 +128,21 @@ Visit [[Google Drive]](https://drive.google.com/drive/folders/1b3GnAbERH8jAoO5md
 
 ### 3. Get Data
 
-Follow the original [MoMask](https://github.com/EricGuo5513/momask-codes) repo to assemble the HumanML3D dataset.
+You have two options here:
+* **Skip getting data**, if you just want to generate motions using *own* descriptions.
+* **Get full data**, if you want to *re-train* and *evaluate* the model.
+* *(if eligible)* refined texts can be shared upon request
+
+**(a). Full data (text + motion)**
+
+**HumanML3D** - Follow the instruction in [HumanML3D](https://github.com/EricGuo5513/HumanML3D.git), then copy the result dataset to our repository:
+```
+cp -r ../HumanML3D/HumanML3D ./dataset/HumanML3D
+```
+
+*NOTE* the dataset folder is located in `external_repos/momask-codes/dataset`. 
+
+**KIT**-Download from [HumanML3D](https://github.com/EricGuo5513/HumanML3D.git), then place result in `./dataset/KIT-ML`
 
 </details>
 

@@ -115,7 +115,7 @@ External repos are found in the folder `external_repos`
 
 ## 1. Conda Environment
 We are using two different conda environments due to dependency conflicts, one for MoMask and one for Text Enhancement.
-# MoMask Environment
+### MoMask Environment
 ```
 cd external_repos/momask-codes
 conda env create -f environment.yml
@@ -123,13 +123,9 @@ conda activate momask
 pip install git+https://github.com/openai/CLIP.git
 ```
 
-# Text Enhancement Environment
-For MacOS:
-```conda env create -f environment_enhance_macos.yml```
+### Text Enhancement Environment
+```conda env create -f environment_enhance.yml```
 ```conda activate enhance```
-
-For Windows:
-#TODO
 
 #### Alternative: Pip Installation
 <details>
@@ -154,17 +150,13 @@ python -m spacy download en_core_web_sm
 ```
 
 ## Text Enhancement Environment
-For MacOS:
 ```conda create -n "enhance" python=3.9.18```
-```pip install -r requirements_enhance_macos.txt```
-
-For Windows:
-#TODO
+```pip install -r requirements_enhance.txt```
 
 </details>
 
 
-*Disclaimer*: this section below is the setup-section from [MoMask](https://github.com/EricGuo5513/momask-codes). Please follow the link for further details.
+*Disclaimer*: this section below is the setup section from [MoMask](https://github.com/EricGuo5513/momask-codes). Please follow the link for further details.
 ### 2. Models and Dependencies
 
 #### Download Pre-trained Models
@@ -224,36 +216,38 @@ Follow the instructions given in _"Step 2 - Set up your API key for all projects
 ```conda activate enhance```
 
 Use the `text_enhance.py` script to refine motion descriptions. 
-Specify the system prompt (to be found in the folder 'prompts') by its filename. This script provides 3 options:
-1. Simple quality control
+Specify the system prompt (to be found in the folder 'prompts') by its filename. Here are some example commands:
+1. Text refinement using GPT-3.5 Turbo for the first 10 text files, here with the limb-specific refinement strategy
     ```
-    python text_enhance.py --quality_control_only --system_prompt file_name -r --continue_previous path/to/previous/folder
+    python text_enhance.py -sp limb_specific_v4 --use_example -r -v -s 10
     ```
-2. Prompt enhancement by similarity search in original dataset (see report)
+2. Prompt enhancement by similarity search for the first 10 text files
     ```
-    python text_enhance.py --prompt_adaptation regular --system_prompt file_name -r
+    python text_enhance.py --prompt_adaptation similarity -r -v -s 10
     ```
-3. Text refinement using LLMs
+3. Simple quality control
     ```
-    python text_enhance.py -pa -sp file_name -r 
+    python text_enhance.py --quality_control_only -r --continue_previous path/to/previous/folder
     ```
 
 #### Additional Useful Flags
 
-* `-v` : verbose
-* `-s` : early stopping - stop refinement after x steps for testing purposes
+* `--verbose, -v` : verbose
+* `--early_stopping, -s` : early stopping - stop refinement after x steps for testing purposes
 
 Text Refinement
-* `--prompt_adaptation_regular` : prompt adaptation technique: similarity, regular
-* `--continue_previous folder` : continue refinement in folder
-* `--refine_all_samples` : refine whole dataset, not only test-set (default)
-* `--use_example examplejson` : add additional context with assistant and user prompt
-* `--use_cross_sample_information` : treat sample text file as one motion (ignores batch size)
-* `--use_llama` : use llama instead of GPT3.5-turbo (default). Requires to also provide `--llama_key <key>`
-* `--batch_size` : use file batching to speed up refinement (not recommended, leads to less detailed information and more inconsistency)
+* `--prompt_adaptation, -pa`: available options: similarity, regular
+* `--system_prompt, -sp`: name of the system prompt to be given to the prompt adaptation model, see folder 'prompts' for options
+* `--continue_previous`: continue refining texts from a specific folder
+* `--refine_all_samples`: refine whole dataset, not only test-set (default)
+* `--use_example`: add additional context with assistant/user example pairs
+* `--samples_text_file`: text file specifying samples to refine, by default test.txt
+* `--use_cross_sample_information`: treat sample text file as one motion (ignores batch size)
+* `--use_llama`: use llama instead of GPT-3.5 Turbo (default). Requires to also provide `--llama_key <key>`
+* `--batch_size`: use file batching to speed up refinement (not recommended, leads to less detailed added information and more format errors)
 
 Quality control
-* `-r` or `-d` : replace with original or delete refined files if they do not meet the quality control
+* `-r` or `-d`: delete or replace with original refined files if they do not meet the quality control
 
 </details>
 

@@ -82,30 +82,61 @@ git clone --recurse-submodules https://github.com/mkiefferus/DigitalHumans
 ```
 External repos are found in the folder `external_repos`
 
-### Setup MoMask Repo
+### Setup Repo
 <details>
 
-*Disclaimer*: this section is the original setup-section from [MoMask](https://github.com/EricGuo5513/momask-codes). Please follow the link for further details.
-
-### 1. Conda Environment
+## 1. Conda Environment
+We are using two different conda environments due to dependency conflicts, one for MoMask and one for Text Enhancement.
+# MoMask Environment
 ```
+cd external_repos/momask-codes
 conda env create -f environment.yml
 conda activate momask
 pip install git+https://github.com/openai/CLIP.git
 ```
-We test our code on Python 3.7.13 and PyTorch 1.7.1
+
+# Text Enhancement Environment
+For MacOS:
+```conda env create -f environment_enhance_macos.yml```
+```conda activate enhance```
+
+For Windows:
+#TODO
 
 #### Alternative: Pip Installation
 <details>
-We provide an alternative pip installation in case you encounter difficulties setting up the conda environment.
+We provide an alternative pip installation in case you encounter difficulties setting up the conda environment. Please set up your two conda environments manually:
 
+## MoMask Environment
 ```
+cd external_repos/momask-codes
+conda create -n "momask" python=3.7.13
+conda activate momask
 pip install -r requirements.txt
 ```
-We test this installation on Python 3.10
+these are the most important packages:
+- spacy
+- torch
+- tqdm
+- openai
+
+Furthermore, you will need to download the ```en_core_web_sm``` model:
+```
+python -m spacy download en_core_web_sm
+```
+
+## Text Enhancement Environment
+For MacOS:
+```conda create -n "enhance" python=3.9.18```
+```pip install -r requirements_enhance_macos.txt```
+
+For Windows:
+#TODO
 
 </details>
 
+
+*Disclaimer*: this section below is the setup-section from [MoMask](https://github.com/EricGuo5513/momask-codes). Please follow the link for further details.
 ### 2. Models and Dependencies
 
 #### Download Pre-trained Models
@@ -146,20 +177,6 @@ cp -r ../HumanML3D/HumanML3D ./dataset/HumanML3D
 
 </details>
 
-
-### Setup Environment
-Make sure to properly setup a separate environment with the `requirements.txt` file.
-In case of any problems, these are the most important packages:
-- spacy
-- torch
-- tqdm
-- openai
-
-Furthermore, you will need to download the ```en_core_web_sm``` model:
-```
-python -m spacy download en_core_web_sm
-```
-
 ### Setup API Token
 
 This project relies on LLMs for text refinement. Accessing these LLMs is done via the OpenAI client. When working with local language models, skip this part. 
@@ -176,6 +193,7 @@ Follow the instructions given in _"Step 2 - Set up your API key for all projects
 <details>
 
 *Remember to switch to our environment for text refinement*
+```conda activate enhance```
 
 Use the `text_enhance.py` script to refine motion descriptions. This script provides 3 options:
 1. Simple quality control
@@ -197,9 +215,9 @@ Use the `text_enhance.py` script to refine motion descriptions. This script prov
 * `-s` : early stopping - stop refinement after x steps for testing purposes
 
 Text Refinement
-* `--continue_previous path/to/previous/folder` : continue refinement in folder
+* `--continue_previous folder` : continue refinement in folder
 * `--refine_all_samples` : refine whole dataset, not only test-set (default)
-* `--use_example path/to/example/json` : add additional context with assistant and user prompt
+* `--use_example examplejson` : add additional context with assistant and user prompt
 * `--use_cross_sample_information` : treat sample text file as one motion (ignores batch size)
 * `--use_llama` : use llama instead of GPT3.5-turbo (default). Requires to also provide `--llama_key <key>`
 * `--batch_size` : use file batching to speed up refinement (not recommended, leads to less detailed information and more inconsistency)
@@ -214,27 +232,31 @@ Quality control
 <details>
 
 *Remember to switch to the MoMask environment for training*
+```conda activate momask```
 
 Use the `t2m_train_eval.py` script to manage the evaluation and training of different text-to-motion models. The script provides various options for training specific models, resuming training, and evaluating models.
+The text folder you specify with texts_folder_name should be located in 'external_repos/momask-codes/data/t2m'.
 
 1. Train Masked Transformer Model end-to-end
     ```
-    python t2m_train_eval.py --train_mask --texts_folder_name path/to/texts/folder
+    python t2m_train_eval.py --train_mask --texts_folder_name folder_name
     ```
 2. Train Residual Transformer Model end-to-end
     ```
-    python t2m_train_eval.py --train_res --texts_folder_name path/to/texts/folder
+    python t2m_train_eval.py --train_res --texts_folder_name folder_name
     ```
 3. Evaluate All Metrics
     ```
-    python t2m_train_eval.py --eval_all_metrics --texts_folder_name path/to/texts/folder
+    python t2m_train_eval.py --eval_all_metrics --texts_folder_name folder_name
     ```
 4. Evaluate Single Samples
     ```
-    python t2m_train_eval.py --eval_single_samples --texts_folder_name path/to/texts/folder
+    python t2m_train_eval.py --eval_single_samples --texts_folder_name folder_name
     ```
 
 ### Additional Useful Flags
+
+The model folders should all be located in 'external_repos/momask-codes/checkpoints/t2m'
 
 * `-v`, `--verbose` : Output information to the console (True) or the logfile (False).
 * `-r`, `--resume_training` : Resume training that was stopped before.
@@ -248,8 +270,9 @@ Use the `t2m_train_eval.py` script to manage the evaluation and training of diff
 <details>
 
 *Remember to switch to our environment for results analysis*
+```conda activate enhance```
 
-This repo also provides analysis scripts for post-processing under `result_analysis`. 
+This repo provides analysis scripts for post-processing under `result_analysis`. 
 
 *Disclaimer* These scripts are not part of the original pipeline and were used to identify trends to further optimise the text refinement and training. They are guidelines and are no final products.
 
@@ -271,7 +294,7 @@ This script has the option to output the results to text files for further proce
 
 `filter_test_dataset.ipynb` filters test data based on keywords rather than using a classifier to label the test data. It currently tries to identify high level motion descriptions but also contains extensions to identify emotions, adjectives and limbs.
 
-Adjust the `PROJECT_ROO_DIR` and the path variables.
+Adjust the `PROJECT_ROOT_DIR` and the path variables.
 
 This script has the option to output the results to text files for further processing.
 

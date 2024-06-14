@@ -225,10 +225,6 @@ Specify the system prompt (to be found in the folder 'prompts') by its filename.
     ```
     python text_enhance.py --prompt_adaptation similarity -r -v -s 10
     ```
-3. Simple quality control
-    ```
-    python text_enhance.py --quality_control_only -r --continue_previous path/to/previous/folder
-    ```
 
 #### Additional Useful Flags
 
@@ -244,7 +240,7 @@ Text Refinement
 * `--samples_text_file`: text file specifying samples to refine, by default test.txt
 * `--use_cross_sample_information`: treat sample text file as one motion (ignores batch size)
 * `--use_llama`: use llama instead of GPT-3.5 Turbo (default). Requires to also provide `--llama_key <key>`
-* `--batch_size`: use file batching to speed up refinement (not recommended, leads to less detailed added information and more format errors)
+* `--batch_size`: specify how many files to batch to speed up refinement (not recommended, likely leads to less detailed added information and more format errors)
 
 Quality control
 * `-r` or `-d`: delete or replace with original refined files if they do not meet the quality control
@@ -284,10 +280,14 @@ Find our pretrained MoMask models [here](https://polybox.ethz.ch/index.php/s/4HY
 
 The model folders should all be located in 'external_repos/momask-codes/checkpoints/t2m'
 
-* `-v`, `--verbose` : Output information to the console (True) or the logfile (False).
-* `-r`, `--resume_training` : Resume training that was stopped before.
-* `--res_name` : Specify the Residual Transformer model to evaluate. Defaults to the original MoMask model.
-* `--mask_name` : Specify the Masked Transformer model to evaluate. Defaults to the original MoMask model.
+* `--res_name`: Specify the Residual Transformer model to evaluate. Defaults to the original MoMask model.
+* `--mask_name`: Specify the Masked Transformer model to evaluate. Defaults to the original MoMask model.
+* `--texts_folder_name`: The name of the folder containing the texts to be used for training or evaluation.
+* `-tm, --train_mask`: Set if you want to train the Masked Transformer end-to-end
+* `-tr, --train_res`: Set if you want to train the Residual Transformer end-to-end
+* `--eval_single_samples`: Whether to generate a multimodal distance score for each sample in the dataset.
+* `-v`, `--verbose`: Output information to the console (True) or the logfile (False).
+* `-r`, `--resume_training`: Resume training that was stopped before.
 
 </details>
 
